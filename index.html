@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Food App Service</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff5f5; margin: 0; padding: 20px; color: #333; }
+    .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    h1, h2 { text-align: center; color: #ff6b6b; }
+    .mascote-box { text-align: center; font-size: 60px; margin: 15px 0; background: #fff0f0; padding: 15px; border-radius: 12px; }
+    label { font-weight: bold; display: block; margin-top: 15px; }
+    input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+    button { background: #ff6b6b; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 20px; }
+    button:hover { background: #ee5253; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Tela 1: Onboarding do Gatinho -->
+    <div id="tela-setup">
+      <h2>Bem-vindo ao FoodApp! 🐱</h2>
+      <p style="text-align:center;">Configure seu negócio para personalizar seu assistente.</p>
+      
+      <div class="mascote-box" id="avatar-preview">🧑‍🍳🐱</div>
+
+      <label for="nome-negocio">Nome do seu Negócio / Cozinha:</label>
+      <input type="text" id="nome-negocio" placeholder="Ex: Doces da Maria">
+
+      <label for="segmento">Segmento da Alimentação:</label>
+      <select id="segmento" onchange="atualizarGatinho()">
+        <option value="confeitaria">🍰 Confeitaria / Docaria (Gatinho Confeiteiro)</option>
+        <option value="marmitaria">🍱 Marmitaria / Almoço (Gatinho Chef)</option>
+        <option value="padaria">🍞 Padaria / Massas (Gatinho Padeiro)</option>
+        <option value="lanchonete">🍔 Lanchonete / Fast Food (Gatinho Atendente)</option>
+      </select>
+
+      <button onclick="salvarPerfil()">Começar Meu Controle!</button>
+    </div>
+
+    <!-- Tela 2: Painel Principal (Dashboard) -->
+    <div id="tela-dashboard" class="hidden">
+      <h1 id="titulo-boas-vindas">Carregando...</h1>
+      <div class="mascote-box" id="avatar-dash">🐱</div>
+      <p id="msg-gatinho" style="text-align:center; font-weight:bold;"></p>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://emzfcvcncsyeaqejbpmw.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_TjhLD2ms8GQhkoOYvZWCWg_z0CyXjOI';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const mascotes = {
+      confeitaria: { emoji: '🍰🐱🎂', fala: 'Pronto para adoçar o dia! Quais encomendas temos hoje?' },
+      marmitaria: { emoji: '🍱🐱🍳', fala: 'Hora do almoço! Vamos organizar os marmitex e os ingredientes?' },
+      padaria: { emoji: '🍞🐱🥐', fala: 'Fornalha quente! Vamos conferir o estoque de farinha?' },
+      lanchonete: { emoji: '🍔🐱🍟', fala: 'Saindo pedido caprichado! O que vamos registrar agora?' }
+    };
+
+    function atualizarGatinho() {
+      const seg = document.getElementById('segmento').value;
+      document.getElementById('avatar-preview').innerText = mascotes[seg].emoji;
+    }
+
+    async function salvarPerfil() {
+      const nome = document.getElementById('nome-negocio').value;
+      const seg = document.getElementById('segmento').value;
+
+      if (!nome) { alert('Digite o nome do seu negócio!'); return; }
+
+      const { data, error } = await supabaseClient.from('perfil').insert([
+        { nome_negocio: nome, segmento: seg, gatinho_acessorio: mascotes[seg].emoji }
+      ]);
+
+      if (error) {
+        alert('Erro ao salvar no Supabase: ' + error.message);
+      } else {
+        carregarDashboard(nome, seg);
+      }
+    }
+
+    function carregarDashboard(nome, seg) {
+      document.getElementById('tela-setup').classList.add('hidden');
+      document.getElementById('tela-dashboard').classList.remove('hidden');
+      document.getElementById('titulo-boas-vindas').innerText = nome;
+      document.getElementById('avatar-dash').innerText = mascotes[seg].emoji;
+      document.getElementById('msg-gatinho').innerText = mascotes[seg].fala;
+    }
+  </script>
+</body>
+</html>
