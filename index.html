@@ -25,7 +25,7 @@
       <h2>Bem-vindo ao FoodApp! 🐱</h2>
       <p style="text-align:center;">Configure seu negócio para personalizar seu assistente.</p>
       
-      <div class="mascote-box" id="avatar-preview">🧑‍🍳🐱</div>
+      <div class="mascote-box" id="avatar-preview">🍰🐱🎂</div>
 
       <label for="nome-negocio">Nome do seu Negócio / Cozinha:</label>
       <input type="text" id="nome-negocio" placeholder="Ex: Doces da Maria">
@@ -33,9 +33,15 @@
       <label for="segmento">Segmento da Alimentação:</label>
       <select id="segmento" onchange="atualizarGatinho()">
         <option value="confeitaria">🍰 Confeitaria / Docaria (Gatinho Confeiteiro)</option>
-        <option value="marmitaria">🍱 Marmitaria / Almoço (Gatinho Chef)</option>
+        <option value="marmitaria">弁当 Marmitaria / Almoço (Gatinho Chef)</option>
         <option value="padaria">🍞 Padaria / Massas (Gatinho Padeiro)</option>
+        <option value="pizzaria">🍕 Pizzaria (Gatinho Pizzaiolo)</option>
         <option value="lanchonete">🍔 Lanchonete / Fast Food (Gatinho Atendente)</option>
+        <option value="sushi">🍣 Japa / Sushi (Gatinho Sushiman)</option>
+        <option value="acai">🍧 Açaí / Gelados (Gatinho do Açaí)</option>
+        <option value="empadas">🥧 Empadas / Tortas (Gatinho Empadeiro)</option>
+        <option value="salgados">🥟 Salgados de Festa (Gatinho Salgadeiro)</option>
+        <option value="fitness">🥗 Comida Fitness / Marmita Fit (Gatinho Fit)</option>
       </select>
 
       <button onclick="salvarPerfil()">Começar Meu Controle!</button>
@@ -58,7 +64,13 @@
       confeitaria: { emoji: '🍰🐱🎂', fala: 'Pronto para adoçar o dia! Quais encomendas temos hoje?' },
       marmitaria: { emoji: '🍱🐱🍳', fala: 'Hora do almoço! Vamos organizar os marmitex e os ingredientes?' },
       padaria: { emoji: '🍞🐱🥐', fala: 'Fornalha quente! Vamos conferir o estoque de farinha?' },
-      lanchonete: { emoji: '🍔🐱🍟', fala: 'Saindo pedido caprichado! O que vamos registrar agora?' }
+      pizzaria: { emoji: '🍕🐱🍕', fala: 'Massa aberta e forno bem quente! Quantas pizzas vamos assar hoje?' },
+      lanchonete: { emoji: '🍔🐱🍟', fala: 'Saindo pedido caprichado! O que vamos registrar agora?' },
+      sushi: { emoji: '🍣🐱🥢', fala: 'Irasshaimase! Prontos para enrolar os melhores sushis?' },
+      acai: { emoji: '🍧🐱🫐', fala: 'Tudo bem geladinho! Vamos conferir os acompanhamentos de açaí?' },
+      empadas: { emoji: '🥧🐱✨', fala: 'Massa derretendo na boca! Quantas empadas vamos assar hoje?' },
+      salgados: { emoji: '🥟🐱🎉', fala: 'Modo festa ativado! Vamos conferir os milheiros de salgados?' },
+      fitness: { emoji: '🥗🐱💪', fala: 'Foco no objetivo! Vamos organizar as marmitas saudáveis da semana?' }
     };
 
     function atualizarGatinho() {
