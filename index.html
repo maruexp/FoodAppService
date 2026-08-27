@@ -18,13 +18,24 @@
     .btn-secundario:hover { background: #0984e3; }
     .hidden { display: none; }
     
+    /* Cards de Resumo Financeiro */
+    .dashboard-financeiro { display: flex; gap: 10px; margin: 15px 0; }
+    .card-fin { flex: 1; background: #fff0f0; padding: 12px; border-radius: 10px; text-align: center; }
+    .card-fin h4 { margin: 0; font-size: 12px; color: #666; }
+    .card-fin p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #ff6b6b; }
+
+    /* Estilos dos Pedidos e Status */
     .card-pedido { background: #fafafa; border-left: 5px solid #ff6b6b; padding: 12px; margin-top: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .card-pedido h4 { margin: 0 0 5px 0; color: #2d3436; font-size: 16px; }
+    .card-pedido.entregue { border-left-color: #2ecc71; opacity: 0.85; }
+    .card-pedido h4 { margin: 0 0 5px 0; color: #2d3436; font-size: 16px; display: flex; justify-content: space-between; }
     .card-pedido p { margin: 3px 0; font-size: 13px; color: #636e72; }
     .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #ffeaa7; color: #d63031; }
+    .badge.entregue { background: #d4edda; color: #155724; }
+    .badge.preparo { background: #cce5ff; color: #004085; }
     .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
+    .btn-status { width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; margin-right: 5px; background: #6c5ce7; }
 
-    /* Estilos da Lista de Mercado */
+    /* Lista de Mercado */
     .item-mercado { display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; }
     .item-mercado.comprado { background: #e8f8f5; text-decoration: line-through; color: #a0a0a0; }
     .item-mercado input[type="checkbox"] { width: auto; margin: 0 10px 0 0; cursor: pointer; transform: scale(1.3); }
@@ -65,6 +76,22 @@
       <h1 id="titulo-boas-vindas">Carregando...</h1>
       <div class="mascote-box" id="avatar-dash">🐱</div>
       <p id="msg-gatinho" style="text-align:center; font-weight:bold; font-size: 14px;"></p>
+
+      <!-- Resumo Financeiro -->
+      <div class="dashboard-financeiro">
+        <div class="card-fin">
+          <h4>FATURAMENTO</h4>
+          <p id="total-faturado">R$ 0.00</p>
+        </div>
+        <div class="card-fin">
+          <h4>PENDENTES</h4>
+          <p id="qtd-pendentes">0</p>
+        </div>
+        <div class="card-fin">
+          <h4>ENTREGUES</h4>
+          <p id="qtd-entregues">0</p>
+        </div>
+      </div>
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
@@ -298,16 +325,52 @@
       const { data: pedidos, error } = await supabaseClient.from('pedidos').select('*').order('created_at', { ascending: false });
       const listaDiv = document.getElementById('lista-pedidos');
       if (error) { listaDiv.innerHTML = '<p style="color:red;">Erro ao carregar pedidos.</p>'; return; }
-      if (!pedidos || pedidos.length === 0) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda cadastrada ainda.</p>'; return; }
+      if (!pedidos || pedidos.length === 0) { 
+        listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda cadastrada ainda.</p>'; 
+        atualizarResumoFinanceiro([]);
+        return; 
+      }
 
-      listaDiv.innerHTML = pedidos.map(p => `
-        <div class="card-pedido">
-          <h4>${p.cliente_nome} <span class="badge">${p.status || 'Pendente'}</span></h4>
-          <p><strong>Pedido:</strong> ${p.descricao}</p>
-          <p><strong>Valor:</strong> R$ ${parseFloat(p.valor_total).toFixed(2)}</p>
-          <p><strong>Entrega:</strong> ${p.data_entrega ? new Date(p.data_entrega).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Sem data definida'}</p>
-        </div>
-      `).join('');
+      atualizarResumoFinanceiro(pedidos);
+
+      listaDiv.innerHTML = pedidos.map(p => {
+        const statusAtual = p.status || 'Pendente';
+        const badgeClass = statusAtual === 'Entregue' ? 'entregue' : (statusAtual === 'Em Preparo' ? 'preparo' : '');
+        return `
+          <div class="card-pedido ${statusAtual === 'Entregue' ? 'entregue' : ''}">
+            <h4>${p.cliente_nome} <span class="badge ${badgeClass}">${statusAtual}</span></h4>
+            <p><strong>Pedido:</strong> ${p.descricao}</p>
+            <p><strong>Valor:</strong> R$ ${parseFloat(p.valor_total).toFixed(2)}</p>
+            <p><strong>Entrega:</strong> ${p.data_entrega ? new Date(p.data_entrega).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Sem data definida'}</p>
+            <div style="margin-top: 8px;">
+              ${statusAtual !== 'Em Preparo' && statusAtual !== 'Entregue' ? `<button class="btn-status" onclick="alterarStatusPedido(${p.id}, 'Em Preparo')">🧑‍🍳 Preparar</button>` : ''}
+              ${statusAtual !== 'Entregue' ? `<button class="btn-status" style="background:#2ecc71;" onclick="alterarStatusPedido(${p.id}, 'Entregue')">✅ Concluir</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function alterarStatusPedido(id, novoStatus) {
+      const { error } = await supabaseClient.from('pedidos').update({ status: novoStatus }).eq('id', id);
+      if (error) alert('Erro ao alterar status: ' + error.message);
+      else carregarPedidos();
+    }
+
+    function atualizarResumoFinanceiro(pedidos) {
+      let faturamento = 0;
+      let pendentes = 0;
+      let entregues = 0;
+
+      pedidos.forEach(p => {
+        faturamento += parseFloat(p.valor_total || 0);
+        if (p.status === 'Entregue') entregues++;
+        else pendentes++;
+      });
+
+      document.getElementById('total-faturado').innerText = `R$ ${faturamento.toFixed(2)}`;
+      document.getElementById('qtd-pendentes').innerText = pendentes;
+      document.getElementById('qtd-entregues').innerText = entregues;
     }
   </script>
 </body>
