@@ -8,13 +8,19 @@
   <style>
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff5f5; margin: 0; padding: 20px; color: #333; }
     .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    h1, h2 { text-align: center; color: #ff6b6b; }
-    .mascote-box { text-align: center; font-size: 60px; margin: 15px 0; background: #fff0f0; padding: 15px; border-radius: 12px; }
-    label { font-weight: bold; display: block; margin-top: 15px; }
-    input, select, button { width: 100%; padding: 12px; margin-top: 8px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-    button { background: #ff6b6b; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 20px; }
+    h1, h2, h3 { text-align: center; color: #ff6b6b; margin-bottom: 10px; }
+    .mascote-box { text-align: center; font-size: 50px; margin: 10px 0; background: #fff0f0; padding: 10px; border-radius: 12px; }
+    label { font-weight: bold; display: block; margin-top: 12px; font-size: 14px; }
+    input, select, button, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+    button { background: #ff6b6b; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 15px; }
     button:hover { background: #ee5253; }
     .hidden { display: none; }
+    
+    /* Estilos dos Cards de Pedidos */
+    .card-pedido { background: #fafafa; border-left: 5px solid #ff6b6b; padding: 12px; margin-top: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .card-pedido h4 { margin: 0 0 5px 0; color: #2d3436; font-size: 16px; }
+    .card-pedido p { margin: 3px 0; font-size: 13px; color: #636e72; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #ffeaa7; color: #d63031; }
   </style>
 </head>
 <body>
@@ -33,7 +39,7 @@
       <label for="segmento">Segmento da Alimentação:</label>
       <select id="segmento" onchange="atualizarGatinho()">
         <option value="confeitaria">🍰 Confeitaria / Docaria (Gatinho Confeiteiro)</option>
-        <option value="marmitaria">弁当 Marmitaria / Almoço (Gatinho Chef)</option>
+        <option value="marmitaria">🍱 Marmitaria / Almoço (Gatinho Chef)</option>
         <option value="padaria">🍞 Padaria / Massas (Gatinho Padeiro)</option>
         <option value="pizzaria">🍕 Pizzaria (Gatinho Pizzaiolo)</option>
         <option value="lanchonete">🍔 Lanchonete / Fast Food (Gatinho Atendente)</option>
@@ -51,7 +57,29 @@
     <div id="tela-dashboard" class="hidden">
       <h1 id="titulo-boas-vindas">Carregando...</h1>
       <div class="mascote-box" id="avatar-dash">🐱</div>
-      <p id="msg-gatinho" style="text-align:center; font-weight:bold;"></p>
+      <p id="msg-gatinho" style="text-align:center; font-weight:bold; font-size: 14px;"></p>
+
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+      <!-- Nova Encomenda -->
+      <h3>📝 Nova Encomenda</h3>
+      <label for="cliente-nome">Nome do Cliente:</label>
+      <input type="text" id="cliente-nome" placeholder="Ex: Ana Silva">
+
+      <label for="descricao">Descrição do Pedido:</label>
+      <textarea id="descricao" rows="2" placeholder="Ex: 1 Bolo de Chocolate + 50 Brigadeiros"></textarea>
+
+      <label for="valor-total">Valor Total (R$):</label>
+      <input type="number" id="valor-total" step="0.01" placeholder="Ex: 150.00">
+
+      <label for="data-entrega">Data de Entrega:</label>
+      <input type="date" id="data-entrega">
+
+      <button onclick="salvarPedido()">Cadastrar Encomenda</button>
+
+      <!-- Lista de Encomendas -->
+      <h3 style="margin-top: 25px;">📋 Suas Encomendas</h3>
+      <div id="lista-pedidos">Carregando encomendas...</div>
     </div>
   </div>
 
@@ -101,6 +129,58 @@
       document.getElementById('titulo-boas-vindas').innerText = nome;
       document.getElementById('avatar-dash').innerText = mascotes[seg].emoji;
       document.getElementById('msg-gatinho').innerText = mascotes[seg].fala;
+      carregarPedidos();
+    }
+
+    async function salvarPedido() {
+      const cliente = document.getElementById('cliente-nome').value;
+      const desc = document.getElementById('descricao').value;
+      const valor = document.getElementById('valor-total').value;
+      const dataEntrega = document.getElementById('data-entrega').value;
+
+      if (!cliente || !desc || !valor) {
+        alert('Preencha o nome do cliente, a descrição e o valor!');
+        return;
+      }
+
+      const { error } = await supabaseClient.from('pedidos').insert([
+        { cliente_nome: cliente, descricao: desc, valor_total: parseFloat(valor), data_entrega: dataEntrega || null, status: 'Pendente' }
+      ]);
+
+      if (error) {
+        alert('Erro ao cadastrar pedido: ' + error.message);
+      } else {
+        alert('Pedido cadastrado com sucesso!');
+        document.getElementById('cliente-nome').value = '';
+        document.getElementById('descricao').value = '';
+        document.getElementById('valor-total').value = '';
+        document.getElementById('data-entrega').value = '';
+        carregarPedidos();
+      }
+    }
+
+    async function carregarPedidos() {
+      const { data: pedidos, error } = await supabaseClient.from('pedidos').select('*').order('created_at', { ascending: false });
+
+      const listaDiv = document.getElementById('lista-pedidos');
+      if (error) {
+        listaDiv.innerHTML = '<p style="color:red;">Erro ao carregar pedidos.</p>';
+        return;
+      }
+
+      if (!pedidos || pedidos.length === 0) {
+        listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda cadastrada ainda.</p>';
+        return;
+      }
+
+      listaDiv.innerHTML = pedidos.map(p => `
+        <div class="card-pedido">
+          <h4>${p.cliente_nome} <span class="badge">${p.status || 'Pendente'}</span></h4>
+          <p><strong>Pedido:</strong> ${p.descricao}</p>
+          <p><strong>Valor:</strong> R$ ${parseFloat(p.valor_total).toFixed(2)}</p>
+          <p><strong>Entrega:</strong> ${p.data_entrega ? new Date(p.data_entrega).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Sem data definida'}</p>
+        </div>
+      `).join('');
     }
   </script>
 </body>
