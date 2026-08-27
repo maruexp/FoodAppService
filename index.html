@@ -34,6 +34,8 @@
     .badge.preparo { background: #cce5ff; color: #004085; }
     .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
     .btn-status { width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; margin-right: 5px; background: #6c5ce7; }
+    .btn-whatsapp { background: #25D366; text-decoration: none; color: white; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
+    .btn-whatsapp:hover { background: #128C7E; }
 
     /* Lista de Mercado */
     .item-mercado { display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; }
@@ -109,10 +111,13 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Seção 2: Nova Encomenda com Quantidade -->
+      <!-- Seção 2: Nova Encomenda -->
       <h3>📝 Nova Encomenda</h3>
       <label for="cliente-nome">Nome do Cliente:</label>
       <input type="text" id="cliente-nome" placeholder="Ex: Ana Silva">
+
+      <label for="cliente-telefone">Telefone / WhatsApp do Cliente:</label>
+      <input type="text" id="cliente-telefone" placeholder="Ex: 21999999999">
 
       <div class="box-item">
         <label for="select-cardapio">Selecionar Item do Cardápio:</label>
@@ -165,6 +170,7 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let listaCardapioLocal = [];
+    let nomeNegocioLocal = '';
 
     const mascotes = {
       confeitaria: { emoji: '🍰🐱🎂', fala: 'Pronto para adoçar o dia! Quais encomendas temos hoje?' },
@@ -198,6 +204,7 @@
     }
 
     function carregarDashboard(nome, seg) {
+      nomeNegocioLocal = nome;
       document.getElementById('tela-setup').classList.add('hidden');
       document.getElementById('tela-dashboard').classList.remove('hidden');
       document.getElementById('titulo-boas-vindas').innerText = nome;
@@ -296,6 +303,7 @@
 
     async function salvarPedido() {
       const cliente = document.getElementById('cliente-nome').value;
+      const telefone = document.getElementById('cliente-telefone').value;
       const desc = document.getElementById('descricao').value;
       const valor = document.getElementById('valor-total').value;
       const dataEntrega = document.getElementById('data-entrega').value;
@@ -306,7 +314,7 @@
       }
 
       const { error } = await supabaseClient.from('pedidos').insert([
-        { cliente_nome: cliente, descricao: desc, valor_total: parseFloat(valor), data_entrega: dataEntrega || null, status: 'Pendente' }
+        { cliente_nome: cliente, telefone: telefone || '', descricao: desc, valor_total: parseFloat(valor), data_entrega: dataEntrega || null, status: 'Pendente' }
       ]);
 
       if (error) {
@@ -314,6 +322,7 @@
       } else {
         alert('Pedido cadastrado com sucesso!');
         document.getElementById('cliente-nome').value = '';
+        document.getElementById('cliente-telefone').value = '';
         document.getElementById('descricao').value = '';
         document.getElementById('valor-total').value = '';
         document.getElementById('data-entrega').value = '';
@@ -336,6 +345,24 @@
       listaDiv.innerHTML = pedidos.map(p => {
         const statusAtual = p.status || 'Pendente';
         const badgeClass = statusAtual === 'Entregue' ? 'entregue' : (statusAtual === 'Em Preparo' ? 'preparo' : '');
+        
+        // Link WhatsApp
+        let numLimpo = (p.telefone || '').replace(/\D/g, '');
+        if (numLimpo.length >= 10 && !numLimpo.startsWith('55')) { numLimpo = '55' + numLimpo; }
+        
+        const msgWhats = encodeURIComponent(
+          `Olá ${p.cliente_nome}! 👋\n` +
+          `Aqui é do *${nomeNegocioLocal || 'nosso estabelecimento'}*.\n\n` +
+          `📝 *Resumo do seu Pedido:*\n${p.descricao}\n\n` +
+          `💰 *Total:* R$ ${parseFloat(p.valor_total).toFixed(2)}\n` +
+          `📅 *Data de Entrega:* ${p.data_entrega ? new Date(p.data_entrega).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'A combinar'}\n\n` +
+          `Obrigado pela preferência! 😊`
+        );
+
+        const btnWhatsHtml = numLimpo 
+          ? `<a href="https://wa.me/${numLimpo}?text=${msgWhats}" target="_blank" class="btn-whatsapp">📲 WhatsApp</a>`
+          : '';
+
         return `
           <div class="card-pedido ${statusAtual === 'Entregue' ? 'entregue' : ''}">
             <h4>${p.cliente_nome} <span class="badge ${badgeClass}">${statusAtual}</span></h4>
@@ -345,6 +372,7 @@
             <div style="margin-top: 8px;">
               ${statusAtual !== 'Em Preparo' && statusAtual !== 'Entregue' ? `<button class="btn-status" onclick="alterarStatusPedido(${p.id}, 'Em Preparo')">🧑‍🍳 Preparar</button>` : ''}
               ${statusAtual !== 'Entregue' ? `<button class="btn-status" style="background:#2ecc71;" onclick="alterarStatusPedido(${p.id}, 'Entregue')">✅ Concluir</button>` : ''}
+              ${btnWhatsHtml}
             </div>
           </div>
         `;
