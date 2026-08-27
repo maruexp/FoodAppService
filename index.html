@@ -16,6 +16,7 @@
     button:hover { background: #ee5253; }
     .btn-secundario { background: #74b9ff; margin-top: 8px; }
     .btn-secundario:hover { background: #0984e3; }
+    .btn-sair { background: #b2bec3; width: auto; float: right; padding: 5px 10px; font-size: 12px; margin-top: 0; }
     .hidden { display: none; }
     
     /* Resumo Financeiro */
@@ -24,7 +25,7 @@
     .card-fin h4 { margin: 0; font-size: 12px; color: #666; }
     .card-fin p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #ff6b6b; }
 
-    /* Chat Inteligente do Gatinho */
+    /* Chat Inteligente */
     .chat-container { background: #fff5f5; border: 1px solid #ffccd5; border-radius: 12px; padding: 12px; margin-top: 15px; }
     .chat-log { max-height: 150px; overflow-y: auto; font-size: 13px; margin-bottom: 10px; }
     .chat-msg { margin: 5px 0; padding: 6px 10px; border-radius: 8px; }
@@ -35,7 +36,7 @@
     .calendario-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; text-align: center; font-size: 12px; }
     .cal-dia-head { font-weight: bold; color: #ff6b6b; padding: 5px 0; }
     .cal-dia { background: #fafafa; border: 1px solid #eee; padding: 8px 2px; border-radius: 6px; min-height: 40px; position: relative; }
-    .cal-dia.com-pedido { background: #ffeaa7; border-color: #fdcb6e; font-weight: bold; cursor: pointer; }
+    .cal-dia.com-pedido { background: #ffeaa7; border-color: #fdcb6e; font-weight: bold; }
 
     /* Filtros e Cards */
     .filtros-pedidos { display: flex; gap: 5px; margin-bottom: 15px; }
@@ -52,7 +53,6 @@
     .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
     .btn-status { width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; margin-right: 5px; background: #6c5ce7; }
     .btn-whatsapp { background: #25D366; text-decoration: none; color: white; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; margin-right: 5px; }
-    .btn-whatsapp:hover { background: #128C7E; }
     .btn-deletar { background: #ff7675; width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; }
 
     .item-mercado { display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; }
@@ -63,11 +63,24 @@
 <body>
 
   <div class="container">
-    <!-- Tela 1: Onboarding -->
-    <div id="tela-setup">
-      <h2>Bem-vindo ao FoodApp! 🐱</h2>
-      <p style="text-align:center;">Configure seu negócio para personalizar seu assistente.</p>
+    <!-- Tela 0: Autenticação (Login / Cadastro) -->
+    <div id="tela-auth">
+      <h2>FoodApp Service 🐱</h2>
+      <p style="text-align:center;">Entre com sua conta ou cadastre-se para acessar de qualquer dispositivo.</p>
       
+      <label for="auth-email">E-mail:</label>
+      <input type="email" id="auth-email" placeholder="seuemail@exemplo.com">
+
+      <label for="auth-senha">Senha:</label>
+      <input type="password" id="auth-senha" placeholder="Sua senha secreta">
+
+      <button onclick="fazerLogin()">Entrar no Meu App</button>
+      <button class="btn-secundario" onclick="criarConta()">Criar Nova Conta</button>
+    </div>
+
+    <!-- Tela 1: Setup Inicial do Perfil -->
+    <div id="tela-setup" class="hidden">
+      <h2>Configurar Seu Negócio 🐱</h2>
       <div class="mascote-box" id="avatar-preview">🍰🐱🎂</div>
 
       <label for="nome-negocio">Nome do seu Negócio / Cozinha:</label>
@@ -87,15 +100,16 @@
         <option value="fitness">🥗 Comida Fitness / Marmita Fit (Gatinho Fit)</option>
       </select>
 
-      <button onclick="salvarPerfil()">Começar Meu Controle!</button>
+      <button onclick="salvarPerfil()">Salvar Perfil e Entrar</button>
     </div>
 
-    <!-- Tela 2: Dashboard -->
+    <!-- Tela 2: Dashboard Principal -->
     <div id="tela-dashboard" class="hidden">
+      <button class="btn-sair" onclick="fazerLogout()">Sair 🚪</button>
       <h1 id="titulo-boas-vindas">Carregando...</h1>
       <div class="mascote-box" id="avatar-dash">🐱</div>
-      
-      <button class="btn-secundario" style="margin-top:0;" onclick="solicitarNotificacoes()">🔔 Ativar Notificações de Pedidos</button>
+
+      <button class="btn-secundario" style="margin-top:0;" onclick="solicitarNotificacoes()">🔔 Ativar Notificações</button>
 
       <!-- Resumo Financeiro -->
       <div class="dashboard-financeiro">
@@ -117,7 +131,7 @@
       <div class="chat-container">
         <h4 style="margin: 0 0 8px 0; color: #ff6b6b; text-align: center;">💬 Pergunte ao seu Gatinho</h4>
         <div class="chat-log" id="chat-log">
-          <div class="chat-msg bot">Miau! Pergunte-me sobre seu faturamento, encomendas pendentes ou lista de compras!</div>
+          <div class="chat-msg bot">Miau! Pergunte sobre seu faturamento, encomendas pendentes ou lista de compras!</div>
         </div>
         <div style="display: flex; gap: 5px;">
           <input type="text" id="chat-input" placeholder="Ex: Quanto faturei? O que falta entregar?" style="margin: 0;" onkeydown="if(event.key==='Enter') perguntarGatinho()">
@@ -127,8 +141,8 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Calendário Visual de Entregas -->
-      <h3>📅 Calendário de Entregas do Mês</h3>
+      <!-- Calendário Visual -->
+      <h3>📅 Calendário de Entregas</h3>
       <div class="calendario-grid">
         <div class="cal-dia-head">Dom</div><div class="cal-dia-head">Seg</div><div class="cal-dia-head">Ter</div>
         <div class="cal-dia-head">Qua</div><div class="cal-dia-head">Qui</div><div class="cal-dia-head">Sex</div><div class="cal-dia-head">Sáb</div>
@@ -156,7 +170,7 @@
       <label for="cliente-nome">Nome do Cliente:</label>
       <input type="text" id="cliente-nome" placeholder="Ex: Ana Silva">
 
-      <label for="cliente-telefone">Telefone / WhatsApp do Cliente:</label>
+      <label for="cliente-telefone">Telefone / WhatsApp:</label>
       <input type="text" id="cliente-telefone" placeholder="Ex: 21999999999">
 
       <div class="box-item">
@@ -186,10 +200,10 @@
       <h3>🛒 Lista de Compras & Mercado</h3>
       <div class="box-item">
         <label for="insumo-nome">Item a Comprar:</label>
-        <input type="text" id="insumo-nome" placeholder="Ex: Leite Condensado, Farinha de Trigo">
+        <input type="text" id="insumo-nome" placeholder="Ex: Leite Condensado">
 
         <label for="insumo-qtd">Quantidade Necessária:</label>
-        <input type="text" id="insumo-qtd" placeholder="Ex: 10 caixas, 5 kg">
+        <input type="text" id="insumo-qtd" placeholder="Ex: 10 caixas">
 
         <button class="btn-secundario" onclick="salvarInsumo()">+ Adicionar à Lista</button>
       </div>
@@ -214,6 +228,7 @@
     const SUPABASE_KEY = 'sb_publishable_TjhLD2ms8GQhkoOYvZWCWg_z0CyXjOI';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let usuarioAtual = null;
     let listaCardapioLocal = [];
     let todosPedidosLocal = [];
     let todosInsumosLocal = [];
@@ -228,6 +243,61 @@
       salgados: { emoji: '🥟🐱🎉' }, fitness: { emoji: '🥗🐱💪' }
     };
 
+    // Verificar sessão ao carregar a página
+    window.onload = async () => {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      if (session) {
+        usuarioAtual = session.user;
+        verificarPerfilUsuario();
+      }
+    };
+
+    async function criarConta() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-senha').value;
+      if (!email || !password) { alert('Digite e-mail e senha!'); return; }
+
+      const { data, error } = await supabaseClient.auth.signUp({ email, password });
+      if (error) alert('Erro ao cadastrar: ' + error.message);
+      else {
+        alert('Conta criada com sucesso! Faça login.');
+      }
+    }
+
+    async function fazerLogin() {
+      const email = document.getElementById('auth-email').value;
+      const password = document.getElementById('auth-senha').value;
+      if (!email || !password) { alert('Digite e-mail e senha!'); return; }
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) alert('Erro ao entrar: ' + error.message);
+      else {
+        usuarioAtual = data.user;
+        verificarPerfilUsuario();
+      }
+    }
+
+    async function fazerLogout() {
+      await supabaseClient.auth.signOut();
+      window.location.reload();
+    }
+
+    async function verificarPerfilUsuario() {
+      document.getElementById('tela-auth').classList.add('hidden');
+      
+      const { data, error } = await supabaseClient
+        .from('perfil')
+        .select('*')
+        .eq('user_id', usuarioAtual.id)
+        .maybeSingle();
+
+      if (data) {
+        carregarDashboard(data.nome_negocio, data.segmento);
+      } else {
+        document.getElementById('tela-setup').classList.remove('hidden');
+      }
+    }
+
     function atualizarGatinho() {
       const seg = document.getElementById('segmento').value;
       document.getElementById('avatar-preview').innerText = mascotes[seg].emoji;
@@ -239,10 +309,10 @@
       if (!nome) { alert('Digite o nome do seu negócio!'); return; }
 
       const { error } = await supabaseClient.from('perfil').insert([
-        { nome_negocio: nome, segmento: seg, gatinho_acessorio: mascotes[seg].emoji }
+        { user_id: usuarioAtual.id, nome_negocio: nome, segmento: seg, gatinho_acessorio: mascotes[seg].emoji }
       ]);
 
-      if (error) alert('Erro ao salvar no Supabase: ' + error.message);
+      if (error) alert('Erro ao salvar perfil: ' + error.message);
       else carregarDashboard(nome, seg);
     }
 
@@ -251,29 +321,20 @@
       document.getElementById('tela-setup').classList.add('hidden');
       document.getElementById('tela-dashboard').classList.remove('hidden');
       document.getElementById('titulo-boas-vindas').innerText = nome;
-      document.getElementById('avatar-dash').innerText = mascotes[seg].emoji;
+      document.getElementById('avatar-dash').innerText = mascotes[seg]?.emoji || '🐱';
       carregarCardapio();
       carregarInsumos();
       carregarPedidos();
     }
 
-    /* Notificações */
     function solicitarNotificacoes() {
       if ('Notification' in window) {
-        Notification.requestPermission().then(permission => {
-          if (permission === 'granted') {
-            alert('Notificações ativadas com sucesso! 🎉');
-            new Notification('FoodApp', { body: 'Você receberá avisos sobre suas encomendas!' });
-          } else {
-            alert('Permissão de notificação negada.');
-          }
+        Notification.requestPermission().then(p => {
+          if (p === 'granted') alert('Notificações ativadas! 🎉');
         });
-      } else {
-        alert('Seu navegador não suporta notificações.');
       }
     }
 
-    /* Gatinho Assistente Inteligente */
     function perguntarGatinho() {
       const input = document.getElementById('chat-input');
       const pergunta = input.value.trim().toLowerCase();
@@ -283,70 +344,47 @@
       chatLog.innerHTML += `<div class="chat-msg user">${input.value}</div>`;
       input.value = '';
 
-      let resposta = "Miau! Não entendi bem... Pergunte sobre faturamento, entregas ou lista de compras!";
+      let resposta = "Miau! Pergunte sobre faturamento, entregas ou lista de compras!";
 
-      if (pergunta.includes('faturei') || pergunta.includes('faturamento') || pergunta.includes('ganhei') || pergunta.includes('total')) {
+      if (pergunta.includes('faturei') || pergunta.includes('faturamento') || pergunta.includes('ganhei')) {
         const total = todosPedidosLocal.reduce((acc, p) => acc + parseFloat(p.valor_total || 0), 0);
-        resposta = `🐾 Seu faturamento total até agora é de **R$ ${total.toFixed(2)}**!`;
-      } else if (pergunta.includes('pendente') || pergunta.includes('falta') || pergunta.includes('entregar')) {
+        resposta = `🐾 Seu faturamento total é de **R$ ${total.toFixed(2)}**!`;
+      } else if (pergunta.includes('pendente') || pergunta.includes('falta')) {
         const pendentes = todosPedidosLocal.filter(p => p.status !== 'Entregue');
-        resposta = `🐾 Você tem **${pendentes.length} encomenda(s) pendente(s)** para entregar.`;
-      } else if (pergunta.includes('comprar') || pergunta.includes('mercado') || pergunta.includes('insumo')) {
+        resposta = `🐾 Você tem **${pendentes.length} encomenda(s) pendente(s)**.`;
+      } else if (pergunta.includes('comprar') || pergunta.includes('mercado')) {
         const aComprar = todosInsumosLocal.filter(i => !i.comprado);
-        if (aComprar.length === 0) {
-          resposta = `🐾 Sua lista de compras está limpa! Tudo comprado.`;
-        } else {
-          resposta = `🐾 Você precisa comprar: ${aComprar.map(i => i.nome).join(', ')}.`;
-        }
-      } else if (pergunta.includes('oi') || pergunta.includes('olá')) {
-        resposta = `Miau! Olá! Como posso te ajudar a gerenciar o *${nomeNegocioLocal || 'seu negócio'}* hoje?`;
+        resposta = aComprar.length ? `🐾 Itens a comprar: ${aComprar.map(i => i.nome).join(', ')}.` : `🐾 Sua lista de mercado está vazia!`;
       }
 
       chatLog.innerHTML += `<div class="chat-msg bot">${resposta}</div>`;
       chatLog.scrollTop = chatLog.scrollHeight;
     }
 
-    /* Calendário Visual */
     function renderizarCalendario() {
       const grid = document.getElementById('grid-dias-mes');
       grid.innerHTML = '';
-      
-      const hoje = new Date();
-      const ano = hoje.getFullYear();
-      const mes = hoje.getMonth();
+      const hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth();
       const primeiroDia = new Date(ano, mes, 1).getDay();
       const totalDias = new Date(ano, mes + 1, 0).getDate();
 
-      for (let i = 0; i < primeiroDia; i++) {
-        grid.innerHTML += `<div class="cal-dia" style="background:transparent; border:none;"></div>`;
-      }
+      for (let i = 0; i < primeiroDia; i++) grid.innerHTML += `<div class="cal-dia" style="background:transparent; border:none;"></div>`;
 
       for (let dia = 1; dia <= totalDias; dia++) {
         const dataStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
         const temPedido = todosPedidosLocal.some(p => p.data_entrega && p.data_entrega.startsWith(dataStr));
-
-        grid.innerHTML += `
-          <div class="cal-dia ${temPedido ? 'com-pedido' : ''}">
-            ${dia}
-            ${temPedido ? '<br>📦' : ''}
-          </div>
-        `;
+        grid.innerHTML += `<div class="cal-dia ${temPedido ? 'com-pedido' : ''}">${dia}${temPedido ? '<br>📦' : ''}</div>`;
       }
     }
 
     async function salvarItemCardapio() {
       const nome = document.getElementById('item-cardapio-nome').value;
       const preco = document.getElementById('item-cardapio-preco').value;
+      if (!nome || !preco) return alert('Preencha nome e preço!');
 
-      if (!nome || !preco) { alert('Preencha o nome e o preço!'); return; }
-
-      const { error } = await supabaseClient.from('produtos_cardapio').insert([
-        { nome: nome, preco_unitario: parseFloat(preco) }
-      ]);
-
+      const { error } = await supabaseClient.from('produtos_cardapio').insert([{ user_id: usuarioAtual.id, nome, preco_unitario: parseFloat(preco) }]);
       if (error) alert('Erro: ' + error.message);
       else {
-        alert('Item adicionado ao Cardápio!');
         document.getElementById('item-cardapio-nome').value = '';
         document.getElementById('item-cardapio-preco').value = '';
         carregarCardapio();
@@ -354,23 +392,16 @@
     }
 
     async function carregarCardapio() {
-      const { data } = await supabaseClient.from('produtos_cardapio').select('*').order('nome', { ascending: true });
+      const { data } = await supabaseClient.from('produtos_cardapio').select('*').eq('user_id', usuarioAtual.id).order('nome', { ascending: true });
+      listaCardapioLocal = data || [];
       const select = document.getElementById('select-cardapio');
-      if (!data || data.length === 0) {
-        select.innerHTML = '<option value="">Nenhum produto no cardápio</option>';
-        listaCardapioLocal = [];
-        return;
-      }
-      listaCardapioLocal = data;
-      select.innerHTML = '<option value="">-- Escolha um item --</option>' + 
-        data.map(item => `<option value="${item.id}">${item.nome} (R$ ${parseFloat(item.preco_unitario).toFixed(2)})</option>`).join('');
+      select.innerHTML = listaCardapioLocal.length ? '<option value="">-- Escolha um item --</option>' + listaCardapioLocal.map(i => `<option value="${i.id}">${i.nome} (R$ ${parseFloat(i.preco_unitario).toFixed(2)})</option>`).join('') : '<option value="">Nenhum produto cadastrado</option>';
     }
 
     function calcularValorAutomatico() {
       const selectId = document.getElementById('select-cardapio').value;
       const qtd = parseInt(document.getElementById('item-qtd').value) || 1;
       const item = listaCardapioLocal.find(i => i.id == selectId);
-
       if (item) {
         document.getElementById('valor-total').value = (item.preco_unitario * qtd).toFixed(2);
         document.getElementById('descricao').value = `${qtd}x ${item.nome}`;
@@ -380,9 +411,9 @@
     async function salvarInsumo() {
       const nome = document.getElementById('insumo-nome').value;
       const qtd = document.getElementById('insumo-qtd').value;
-      if (!nome) { alert('Digite o item!'); return; }
+      if (!nome) return alert('Digite o item!');
 
-      const { error } = await supabaseClient.from('insumos').insert([{ nome: nome, quantidade: qtd, comprado: false }]);
+      const { error } = await supabaseClient.from('insumos').insert([{ user_id: usuarioAtual.id, nome, quantidade: qtd, comprado: false }]);
       if (error) alert('Erro: ' + error.message);
       else {
         document.getElementById('insumo-nome').value = '';
@@ -392,19 +423,17 @@
     }
 
     async function carregarInsumos() {
-      const { data } = await supabaseClient.from('insumos').select('*').order('created_at', { ascending: false });
+      const { data } = await supabaseClient.from('insumos').select('*').eq('user_id', usuarioAtual.id).order('created_at', { ascending: false });
       todosInsumosLocal = data || [];
       const listaDiv = document.getElementById('lista-insumos');
-      if (!data || data.length === 0) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Lista vazia.</p>'; return; }
-
-      listaDiv.innerHTML = data.map(item => `
+      listaDiv.innerHTML = todosInsumosLocal.length ? todosInsumosLocal.map(item => `
         <div class="item-mercado ${item.comprado ? 'comprado' : ''}">
           <div>
             <input type="checkbox" ${item.comprado ? 'checked' : ''} onchange="alternarInsumo(${item.id}, ${!item.comprado})">
             <strong>${item.nome}</strong> ${item.quantidade ? `(${item.quantidade})` : ''}
           </div>
         </div>
-      `).join('');
+      `).join('') : '<p style="text-align:center; color:#999;">Lista vazia.</p>';
     }
 
     async function alternarInsumo(id, novoStatus) {
@@ -419,10 +448,10 @@
       const valor = document.getElementById('valor-total').value;
       const dataEntrega = document.getElementById('data-entrega').value;
 
-      if (!cliente || !desc || !valor) { alert('Preencha os campos obrigatórios!'); return; }
+      if (!cliente || !desc || !valor) return alert('Preencha os campos!');
 
       const { error } = await supabaseClient.from('pedidos').insert([
-        { cliente_nome: cliente, telefone: telefone || '', descricao: desc, valor_total: parseFloat(valor), data_entrega: dataEntrega || null, status: 'Pendente' }
+        { user_id: usuarioAtual.id, cliente_nome: cliente, telefone: telefone || '', descricao: desc, valor_total: parseFloat(valor), data_entrega: dataEntrega || null, status: 'Pendente' }
       ]);
 
       if (error) alert('Erro: ' + error.message);
@@ -433,16 +462,12 @@
         document.getElementById('descricao').value = '';
         document.getElementById('valor-total').value = '';
         document.getElementById('data-entrega').value = '';
-        
-        if (Notification.permission === 'granted') {
-          new Notification('Novo Pedido Cadastrado!', { body: `Pedido de ${cliente} para o dia ${dataEntrega || 'A combinar'}.` });
-        }
         carregarPedidos();
       }
     }
 
     async function carregarPedidos() {
-      const { data } = await supabaseClient.from('pedidos').select('*').order('created_at', { ascending: false });
+      const { data } = await supabaseClient.from('pedidos').select('*').eq('user_id', usuarioAtual.id).order('created_at', { ascending: false });
       todosPedidosLocal = data || [];
       atualizarResumoFinanceiro(todosPedidosLocal);
       renderizarCalendario();
@@ -464,7 +489,7 @@
         return true;
       });
 
-      if (pedidosFiltrados.length === 0) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Sem encomendas nesta visualização.</p>'; return; }
+      if (!pedidosFiltrados.length) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Sem encomendas.</p>'; return; }
 
       listaDiv.innerHTML = pedidosFiltrados.map(p => {
         const statusAtual = p.status || 'Pendente';
@@ -504,7 +529,7 @@
     }
 
     async function deletarPedido(id) {
-      if (!confirm('Tem certeza que deseja excluir esta encomenda?')) return;
+      if (!confirm('Deseja excluir esta encomenda?')) return;
       await supabaseClient.from('pedidos').delete().eq('id', id);
       carregarPedidos();
     }
