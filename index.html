@@ -23,6 +23,11 @@
     .card-pedido p { margin: 3px 0; font-size: 13px; color: #636e72; }
     .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #ffeaa7; color: #d63031; }
     .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
+
+    /* Estilos da Lista de Mercado */
+    .item-mercado { display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; }
+    .item-mercado.comprado { background: #e8f8f5; text-decoration: line-through; color: #a0a0a0; }
+    .item-mercado input[type="checkbox"] { width: auto; margin: 0 10px 0 0; cursor: pointer; transform: scale(1.3); }
   </style>
 </head>
 <body>
@@ -103,8 +108,26 @@
 
       <button onclick="salvarPedido()">Cadastrar Encomenda</button>
 
-      <!-- Seção 3: Lista de Encomendas -->
-      <h3 style="margin-top: 25px;">📋 Suas Encomendas</h3>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+      <!-- Seção 3: Lista de Compras / Mercado -->
+      <h3>🛒 Lista de Compras & Mercado</h3>
+      <div class="box-item">
+        <label for="insumo-nome">Item a Comprar:</label>
+        <input type="text" id="insumo-nome" placeholder="Ex: Leite Condensado, Farinha de Trigo">
+
+        <label for="insumo-qtd">Quantidade Necessária:</label>
+        <input type="text" id="insumo-qtd" placeholder="Ex: 10 caixas, 5 kg">
+
+        <button class="btn-secundario" onclick="salvarInsumo()">+ Adicionar à Lista</button>
+      </div>
+
+      <div id="lista-insumos" style="margin-top: 15px;">Carregando lista de compras...</div>
+
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+      <!-- Seção 4: Lista de Encomendas -->
+      <h3>📋 Suas Encomendas</h3>
       <div id="lista-pedidos">Carregando encomendas...</div>
     </div>
   </div>
@@ -154,6 +177,7 @@
       document.getElementById('avatar-dash').innerText = mascotes[seg].emoji;
       document.getElementById('msg-gatinho').innerText = mascotes[seg].fala;
       carregarCardapio();
+      carregarInsumos();
       carregarPedidos();
     }
 
@@ -200,6 +224,47 @@
         document.getElementById('valor-total').value = total.toFixed(2);
         document.getElementById('descricao').value = `${qtd}x ${item.nome}`;
       }
+    }
+
+    async function salvarInsumo() {
+      const nome = document.getElementById('insumo-nome').value;
+      const qtd = document.getElementById('insumo-qtd').value;
+
+      if (!nome) { alert('Digite o nome do item a comprar!'); return; }
+
+      const { error } = await supabaseClient.from('insumos').insert([
+        { nome: nome, quantidade: qtd, comprado: false }
+      ]);
+
+      if (error) {
+        alert('Erro ao adicionar insumo: ' + error.message);
+      } else {
+        document.getElementById('insumo-nome').value = '';
+        document.getElementById('insumo-qtd').value = '';
+        carregarInsumos();
+      }
+    }
+
+    async function carregarInsumos() {
+      const { data, error } = await supabaseClient.from('insumos').select('*').order('created_at', { ascending: false });
+      const listaDiv = document.getElementById('lista-insumos');
+      if (error) { listaDiv.innerHTML = '<p style="color:red;">Erro ao carregar insumos.</p>'; return; }
+      if (!data || data.length === 0) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Sua lista de mercado está vazia.</p>'; return; }
+
+      listaDiv.innerHTML = data.map(item => `
+        <div class="item-mercado ${item.comprado ? 'comprado' : ''}">
+          <div>
+            <input type="checkbox" ${item.comprado ? 'checked' : ''} onchange="alternarInsumo(${item.id}, ${!item.comprado})">
+            <strong>${item.nome}</strong> ${item.quantidade ? `(${item.quantidade})` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function alternarInsumo(id, novoStatus) {
+      const { error } = await supabaseClient.from('insumos').update({ comprado: novoStatus }).eq('id', id);
+      if (error) alert('Erro ao atualizar: ' + error.message);
+      else carregarInsumos();
     }
 
     async function salvarPedido() {
