@@ -14,13 +14,15 @@
     input, select, button, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
     button { background: #ff6b6b; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 15px; }
     button:hover { background: #ee5253; }
+    .btn-secundario { background: #74b9ff; margin-top: 8px; }
+    .btn-secundario:hover { background: #0984e3; }
     .hidden { display: none; }
     
-    /* Estilos dos Cards de Pedidos */
     .card-pedido { background: #fafafa; border-left: 5px solid #ff6b6b; padding: 12px; margin-top: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     .card-pedido h4 { margin: 0 0 5px 0; color: #2d3436; font-size: 16px; }
     .card-pedido p { margin: 3px 0; font-size: 13px; color: #636e72; }
     .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #ffeaa7; color: #d63031; }
+    .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
   </style>
 </head>
 <body>
@@ -61,23 +63,47 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Nova Encomenda -->
+      <!-- Seção 1: Cadastrar Item no Cardápio -->
+      <h3>📖 Meu Cardápio Fixo</h3>
+      <div class="box-item">
+        <label for="item-cardapio-nome">Nome do Produto:</label>
+        <input type="text" id="item-cardapio-nome" placeholder="Ex: Brigadeiro Gourmet, Marmita Fit">
+
+        <label for="item-cardapio-preco">Preço Unitário (R$):</label>
+        <input type="number" id="item-cardapio-preco" step="0.01" placeholder="Ex: 2.50">
+
+        <button class="btn-secundario" onclick="salvarItemCardapio()">+ Adicionar ao Cardápio</button>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+      <!-- Seção 2: Nova Encomenda com Quantidade -->
       <h3>📝 Nova Encomenda</h3>
       <label for="cliente-nome">Nome do Cliente:</label>
       <input type="text" id="cliente-nome" placeholder="Ex: Ana Silva">
 
-      <label for="descricao">Descrição do Pedido:</label>
-      <textarea id="descricao" rows="2" placeholder="Ex: 1 Bolo de Chocolate + 50 Brigadeiros"></textarea>
+      <div class="box-item">
+        <label for="select-cardapio">Selecionar Item do Cardápio:</label>
+        <select id="select-cardapio" onchange="calcularValorAutomatico()">
+          <option value="">Carregando cardápio...</option>
+        </select>
 
-      <label for="valor-total">Valor Total (R$):</label>
-      <input type="number" id="valor-total" step="0.01" placeholder="Ex: 150.00">
+        <label for="item-qtd">Quantidade:</label>
+        <input type="number" id="item-qtd" value="1" min="1" onchange="calcularValorAutomatico()" oninput="calcularValorAutomatico()">
+      </div>
+
+      <label for="descricao">Resumo / Detalhes do Pedido:</label>
+      <textarea id="descricao" rows="2" placeholder="Ex: 50x Brigadeiro Gourmet"></textarea>
+
+      <label for="valor-total">Valor Total Calculado (R$):</label>
+      <input type="number" id="valor-total" step="0.01" placeholder="Ex: 125.00">
 
       <label for="data-entrega">Data de Entrega:</label>
       <input type="date" id="data-entrega">
 
       <button onclick="salvarPedido()">Cadastrar Encomenda</button>
 
-      <!-- Lista de Encomendas -->
+      <!-- Seção 3: Lista de Encomendas -->
       <h3 style="margin-top: 25px;">📋 Suas Encomendas</h3>
       <div id="lista-pedidos">Carregando encomendas...</div>
     </div>
@@ -87,6 +113,8 @@
     const SUPABASE_URL = 'https://emzfcvcncsyeaqejbpmw.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_TjhLD2ms8GQhkoOYvZWCWg_z0CyXjOI';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let listaCardapioLocal = [];
 
     const mascotes = {
       confeitaria: { emoji: '🍰🐱🎂', fala: 'Pronto para adoçar o dia! Quais encomendas temos hoje?' },
@@ -109,18 +137,14 @@
     async function salvarPerfil() {
       const nome = document.getElementById('nome-negocio').value;
       const seg = document.getElementById('segmento').value;
-
       if (!nome) { alert('Digite o nome do seu negócio!'); return; }
 
-      const { data, error } = await supabaseClient.from('perfil').insert([
+      const { error } = await supabaseClient.from('perfil').insert([
         { nome_negocio: nome, segmento: seg, gatinho_acessorio: mascotes[seg].emoji }
       ]);
 
-      if (error) {
-        alert('Erro ao salvar no Supabase: ' + error.message);
-      } else {
-        carregarDashboard(nome, seg);
-      }
+      if (error) alert('Erro ao salvar no Supabase: ' + error.message);
+      else carregarDashboard(nome, seg);
     }
 
     function carregarDashboard(nome, seg) {
@@ -129,7 +153,53 @@
       document.getElementById('titulo-boas-vindas').innerText = nome;
       document.getElementById('avatar-dash').innerText = mascotes[seg].emoji;
       document.getElementById('msg-gatinho').innerText = mascotes[seg].fala;
+      carregarCardapio();
       carregarPedidos();
+    }
+
+    async function salvarItemCardapio() {
+      const nome = document.getElementById('item-cardapio-nome').value;
+      const preco = document.getElementById('item-cardapio-preco').value;
+
+      if (!nome || !preco) { alert('Preencha o nome e o preço do produto!'); return; }
+
+      const { error } = await supabaseClient.from('produtos_cardapio').insert([
+        { nome: nome, preco_unitario: parseFloat(preco) }
+      ]);
+
+      if (error) {
+        alert('Erro ao salvar no cardápio: ' + error.message);
+      } else {
+        alert('Item adicionado ao Cardápio!');
+        document.getElementById('item-cardapio-nome').value = '';
+        document.getElementById('item-cardapio-preco').value = '';
+        carregarCardapio();
+      }
+    }
+
+    async function carregarCardapio() {
+      const { data, error } = await supabaseClient.from('produtos_cardapio').select('*').order('nome', { ascending: true });
+      const select = document.getElementById('select-cardapio');
+      if (error || !data || data.length === 0) {
+        select.innerHTML = '<option value="">Nenhum produto no cardápio</option>';
+        listaCardapioLocal = [];
+        return;
+      }
+      listaCardapioLocal = data;
+      select.innerHTML = '<option value="">-- Escolha um item --</option>' + 
+        data.map(item => `<option value="${item.id}">${item.nome} (R$ ${parseFloat(item.preco_unitario).toFixed(2)})</option>`).join('');
+    }
+
+    function calcularValorAutomatico() {
+      const selectId = document.getElementById('select-cardapio').value;
+      const qtd = parseInt(document.getElementById('item-qtd').value) || 1;
+      const item = listaCardapioLocal.find(i => i.id == selectId);
+
+      if (item) {
+        const total = item.preco_unitario * qtd;
+        document.getElementById('valor-total').value = total.toFixed(2);
+        document.getElementById('descricao').value = `${qtd}x ${item.nome}`;
+      }
     }
 
     async function salvarPedido() {
@@ -161,17 +231,9 @@
 
     async function carregarPedidos() {
       const { data: pedidos, error } = await supabaseClient.from('pedidos').select('*').order('created_at', { ascending: false });
-
       const listaDiv = document.getElementById('lista-pedidos');
-      if (error) {
-        listaDiv.innerHTML = '<p style="color:red;">Erro ao carregar pedidos.</p>';
-        return;
-      }
-
-      if (!pedidos || pedidos.length === 0) {
-        listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda cadastrada ainda.</p>';
-        return;
-      }
+      if (error) { listaDiv.innerHTML = '<p style="color:red;">Erro ao carregar pedidos.</p>'; return; }
+      if (!pedidos || pedidos.length === 0) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda cadastrada ainda.</p>'; return; }
 
       listaDiv.innerHTML = pedidos.map(p => `
         <div class="card-pedido">
