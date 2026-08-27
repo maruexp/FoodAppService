@@ -24,6 +24,11 @@
     .card-fin h4 { margin: 0; font-size: 12px; color: #666; }
     .card-fin p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #ff6b6b; }
 
+    /* Filtros de Lista */
+    .filtros-pedidos { display: flex; gap: 5px; margin-bottom: 15px; }
+    .btn-filtro { flex: 1; padding: 6px; font-size: 12px; background: #f1f2f6; color: #2d3436; margin-top: 0; border: 1px solid #dfe4ea; }
+    .btn-filtro.ativo { background: #ff6b6b; color: white; border-color: #ff6b6b; }
+
     /* Estilos dos Pedidos e Status */
     .card-pedido { background: #fafafa; border-left: 5px solid #ff6b6b; padding: 12px; margin-top: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     .card-pedido.entregue { border-left-color: #2ecc71; opacity: 0.85; }
@@ -34,8 +39,10 @@
     .badge.preparo { background: #cce5ff; color: #004085; }
     .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
     .btn-status { width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; margin-right: 5px; background: #6c5ce7; }
-    .btn-whatsapp { background: #25D366; text-decoration: none; color: white; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; }
+    .btn-whatsapp { background: #25D366; text-decoration: none; color: white; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; margin-right: 5px; }
     .btn-whatsapp:hover { background: #128C7E; }
+    .btn-deletar { background: #ff7675; width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; }
+    .btn-deletar:hover { background: #d63031; }
 
     /* Lista de Mercado */
     .item-mercado { display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; }
@@ -160,6 +167,11 @@
 
       <!-- Seção 4: Lista de Encomendas -->
       <h3>📋 Suas Encomendas</h3>
+      <div class="filtros-pedidos">
+        <button class="btn-filtro ativo" id="filtro-todos" onclick="filtrarPedidos('todos')">Todos</button>
+        <button class="btn-filtro" id="filtro-pendentes" onclick="filtrarPedidos('pendentes')">Pendentes</button>
+        <button class="btn-filtro" id="filtro-entregues" onclick="filtrarPedidos('entregues')">Entregues</button>
+      </div>
       <div id="lista-pedidos">Carregando encomendas...</div>
     </div>
   </div>
@@ -170,6 +182,8 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     let listaCardapioLocal = [];
+    let todosPedidosLocal = [];
+    let filtroAtual = 'todos';
     let nomeNegocioLocal = '';
 
     const mascotes = {
@@ -332,21 +346,41 @@
 
     async function carregarPedidos() {
       const { data: pedidos, error } = await supabaseClient.from('pedidos').select('*').order('created_at', { ascending: false });
+      if (error) { 
+        document.getElementById('lista-pedidos').innerHTML = '<p style="color:red;">Erro ao carregar pedidos.</p>'; 
+        return; 
+      }
+      
+      todosPedidosLocal = pedidos || [];
+      atualizarResumoFinanceiro(todosPedidosLocal);
+      renderizarPedidos();
+    }
+
+    function filtrarPedidos(tipo) {
+      filtroAtual = tipo;
+      document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('ativo'));
+      document.getElementById(`filtro-${tipo}`).classList.add('ativo');
+      renderizarPedidos();
+    }
+
+    function renderizarPedidos() {
       const listaDiv = document.getElementById('lista-pedidos');
-      if (error) { listaDiv.innerHTML = '<p style="color:red;">Erro ao carregar pedidos.</p>'; return; }
-      if (!pedidos || pedidos.length === 0) { 
-        listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda cadastrada ainda.</p>'; 
-        atualizarResumoFinanceiro([]);
+
+      let pedidosFiltrados = todosPedidosLocal.filter(p => {
+        if (filtroAtual === 'pendentes') return p.status !== 'Entregue';
+        if (filtroAtual === 'entregues') return p.status === 'Entregue';
+        return true;
+      });
+
+      if (pedidosFiltrados.length === 0) { 
+        listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Nenhuma encomenda nesta visualização.</p>'; 
         return; 
       }
 
-      atualizarResumoFinanceiro(pedidos);
-
-      listaDiv.innerHTML = pedidos.map(p => {
+      listaDiv.innerHTML = pedidosFiltrados.map(p => {
         const statusAtual = p.status || 'Pendente';
         const badgeClass = statusAtual === 'Entregue' ? 'entregue' : (statusAtual === 'Em Preparo' ? 'preparo' : '');
         
-        // Link WhatsApp
         let numLimpo = (p.telefone || '').replace(/\D/g, '');
         if (numLimpo.length >= 10 && !numLimpo.startsWith('55')) { numLimpo = '55' + numLimpo; }
         
@@ -373,6 +407,7 @@
               ${statusAtual !== 'Em Preparo' && statusAtual !== 'Entregue' ? `<button class="btn-status" onclick="alterarStatusPedido(${p.id}, 'Em Preparo')">🧑‍🍳 Preparar</button>` : ''}
               ${statusAtual !== 'Entregue' ? `<button class="btn-status" style="background:#2ecc71;" onclick="alterarStatusPedido(${p.id}, 'Entregue')">✅ Concluir</button>` : ''}
               ${btnWhatsHtml}
+              <button class="btn-deletar" onclick="deletarPedido(${p.id})">🗑️ Excluir</button>
             </div>
           </div>
         `;
@@ -382,6 +417,14 @@
     async function alterarStatusPedido(id, novoStatus) {
       const { error } = await supabaseClient.from('pedidos').update({ status: novoStatus }).eq('id', id);
       if (error) alert('Erro ao alterar status: ' + error.message);
+      else carregarPedidos();
+    }
+
+    async function deletarPedido(id) {
+      if (!confirm('Tem certeza que deseja excluir esta encomenda?')) return;
+
+      const { error } = await supabaseClient.from('pedidos').delete().eq('id', id);
+      if (error) alert('Erro ao excluir pedido: ' + error.message);
       else carregarPedidos();
     }
 
