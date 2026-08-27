@@ -19,26 +19,22 @@
     .btn-sair { background: #b2bec3; width: auto; float: right; padding: 5px 10px; font-size: 12px; margin-top: 0; }
     .hidden { display: none; }
     
-    /* Resumo Financeiro */
     .dashboard-financeiro { display: flex; gap: 10px; margin: 15px 0; }
     .card-fin { flex: 1; background: #fff0f0; padding: 12px; border-radius: 10px; text-align: center; }
     .card-fin h4 { margin: 0; font-size: 12px; color: #666; }
     .card-fin p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #ff6b6b; }
 
-    /* Chat Inteligente */
     .chat-container { background: #fff5f5; border: 1px solid #ffccd5; border-radius: 12px; padding: 12px; margin-top: 15px; }
     .chat-log { max-height: 150px; overflow-y: auto; font-size: 13px; margin-bottom: 10px; }
     .chat-msg { margin: 5px 0; padding: 6px 10px; border-radius: 8px; }
     .chat-msg.user { background: #74b9ff; color: white; text-align: right; margin-left: 20%; }
     .chat-msg.bot { background: white; border: 1px solid #ffccd5; color: #333; margin-right: 20%; }
 
-    /* Calendário */
     .calendario-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; text-align: center; font-size: 12px; }
     .cal-dia-head { font-weight: bold; color: #ff6b6b; padding: 5px 0; }
     .cal-dia { background: #fafafa; border: 1px solid #eee; padding: 8px 2px; border-radius: 6px; min-height: 40px; position: relative; }
     .cal-dia.com-pedido { background: #ffeaa7; border-color: #fdcb6e; font-weight: bold; }
 
-    /* Filtros e Cards */
     .filtros-pedidos { display: flex; gap: 5px; margin-bottom: 15px; }
     .btn-filtro { flex: 1; padding: 6px; font-size: 12px; background: #f1f2f6; color: #2d3436; margin-top: 0; border: 1px solid #dfe4ea; }
     .btn-filtro.ativo { background: #ff6b6b; color: white; border-color: #ff6b6b; }
@@ -63,10 +59,10 @@
 <body>
 
   <div class="container">
-    <!-- Tela 0: Autenticação (Login / Cadastro) -->
+    <!-- Tela 0: Autenticação -->
     <div id="tela-auth">
       <h2>FoodApp Service 🐱</h2>
-      <p style="text-align:center;">Entre com sua conta ou cadastre-se para acessar de qualquer dispositivo.</p>
+      <p style="text-align:center;">Entre com sua conta ou cadastre-se para sincronizar seus dados.</p>
       
       <label for="auth-email">E-mail:</label>
       <input type="email" id="auth-email" placeholder="seuemail@exemplo.com">
@@ -111,7 +107,6 @@
 
       <button class="btn-secundario" style="margin-top:0;" onclick="solicitarNotificacoes()">🔔 Ativar Notificações</button>
 
-      <!-- Resumo Financeiro -->
       <div class="dashboard-financeiro">
         <div class="card-fin">
           <h4>FATURAMENTO</h4>
@@ -127,7 +122,6 @@
         </div>
       </div>
 
-      <!-- Chat com Gatinho Assistente -->
       <div class="chat-container">
         <h4 style="margin: 0 0 8px 0; color: #ff6b6b; text-align: center;">💬 Pergunte ao seu Gatinho</h4>
         <div class="chat-log" id="chat-log">
@@ -141,7 +135,6 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Calendário Visual -->
       <h3>📅 Calendário de Entregas</h3>
       <div class="calendario-grid">
         <div class="cal-dia-head">Dom</div><div class="cal-dia-head">Seg</div><div class="cal-dia-head">Ter</div>
@@ -151,7 +144,6 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Cardápio Fixo -->
       <h3>📖 Meu Cardápio Fixo</h3>
       <div class="box-item">
         <label for="item-cardapio-nome">Nome do Produto:</label>
@@ -165,7 +157,6 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Nova Encomenda -->
       <h3>📝 Nova Encomenda</h3>
       <label for="cliente-nome">Nome do Cliente:</label>
       <input type="text" id="cliente-nome" placeholder="Ex: Ana Silva">
@@ -196,7 +187,6 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Lista de Compras -->
       <h3>🛒 Lista de Compras & Mercado</h3>
       <div class="box-item">
         <label for="insumo-nome">Item a Comprar:</label>
@@ -212,7 +202,6 @@
 
       <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-      <!-- Lista de Encomendas -->
       <h3>📋 Suas Encomendas</h3>
       <div class="filtros-pedidos">
         <button class="btn-filtro ativo" id="filtro-todos" onclick="filtrarPedidos('todos')">Todos</button>
@@ -243,7 +232,6 @@
       salgados: { emoji: '🥟🐱🎉' }, fitness: { emoji: '🥗🐱💪' }
     };
 
-    // Verificar sessão ao carregar a página
     window.onload = async () => {
       const { data: { session } } = await supabaseClient.auth.getSession();
       if (session) {
@@ -259,9 +247,7 @@
 
       const { data, error } = await supabaseClient.auth.signUp({ email, password });
       if (error) alert('Erro ao cadastrar: ' + error.message);
-      else {
-        alert('Conta criada com sucesso! Faça login.');
-      }
+      else alert('Conta criada com sucesso! Faça login.');
     }
 
     async function fazerLogin() {
@@ -285,17 +271,14 @@
     async function verificarPerfilUsuario() {
       document.getElementById('tela-auth').classList.add('hidden');
       
-      const { data, error } = await supabaseClient
+      const { data } = await supabaseClient
         .from('perfil')
         .select('*')
         .eq('user_id', usuarioAtual.id)
         .maybeSingle();
 
-      if (data) {
-        carregarDashboard(data.nome_negocio, data.segmento);
-      } else {
-        document.getElementById('tela-setup').classList.remove('hidden');
-      }
+      if (data) carregarDashboard(data.nome_negocio, data.segmento);
+      else document.getElementById('tela-setup').classList.remove('hidden');
     }
 
     function atualizarGatinho() {
@@ -306,7 +289,7 @@
     async function salvarPerfil() {
       const nome = document.getElementById('nome-negocio').value;
       const seg = document.getElementById('segmento').value;
-      if (!nome) { alert('Digite o nome do seu negócio!'); return; }
+      if (!nome) return alert('Digite o nome do seu negócio!');
 
       const { error } = await supabaseClient.from('perfil').insert([
         { user_id: usuarioAtual.id, nome_negocio: nome, segmento: seg, gatinho_acessorio: mascotes[seg].emoji }
