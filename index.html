@@ -26,29 +26,24 @@
       border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
     }
     #tela-login h2 { margin-bottom: 20px; color: var(--primary-color); }
-    #tela-login input, #tela-login select {
-      width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px;
-    }
-    #tela-login button {
-      width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none;
-      border-radius: 6px; font-weight: bold; cursor: pointer;
-    }
+    #tela-login input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; }
+    #tela-login button { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
     /* Menu Navegação */
     nav { display: flex; gap: 8px; background: #2c3e50; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
-    nav button { background: #34495e; color: white; border: none; padding: 8px 14px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 13px; }
+    nav button { background: #34495e; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 6px; font-weight: bold; font-size: 13px; }
     nav button:hover { background: var(--primary-color); }
     .btn-sair { margin-left: auto; background: #e74c3c !important; }
 
     /* Dashboard & Cards */
-    .dashboard-financeiro { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+    .dashboard-financeiro { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 15px; }
     .card-fin { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
     .card-fin h4 { color: #7f8c8d; margin-bottom: 8px; font-size: 12px; }
-    .card-fin p { font-size: 22px; font-weight: bold; color: #2c3e50; }
+    .card-fin p { font-size: 20px; font-weight: bold; color: #2c3e50; }
 
-    /* Form & Seções */
+    /* Componentes Genericos */
     .section-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
-    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
     input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
     .btn-action { background: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
@@ -58,8 +53,8 @@
     th { background: #f8f9fa; }
     .img-preview { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; }
 
-    /* WhatsApp Button */
-    .btn-wsp { background: #25d366; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 12px; text-decoration: none; display: inline-block; }
+    /* Gerador de Memes */
+    #meme-canvas { border: 2px dashed #ccc; border-radius: 8px; max-width: 100%; background: #fff; margin-top: 15px; }
 
     /* Gatinho IA Widget */
     #gatinho-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
@@ -86,10 +81,12 @@
   <div id="app-principal" style="display: none;">
     <nav>
       <button onclick="navegarPara('tela-dashboard')">📊 Dashboard</button>
-      <button onclick="navegarPara('tela-cardapio')">🍕 Cardápio & Precificação</button>
+      <button onclick="navegarPara('tela-mercado')">🛒 Mercado & MRP</button>
+      <button onclick="navegarPara('tela-fichas')">📖 Ficha Técnica</button>
       <button onclick="navegarPara('tela-encomendas')">📦 Encomendas</button>
+      <button onclick="navegarPara('tela-memes')">🎭 Gerador de Memes</button>
       <button onclick="navegarPara('tela-calendario')">📅 Calendário</button>
-      <button onclick="navegarPara('tela-config')">⚙️ Ajustes & Tema</button>
+      <button onclick="navegarPara('tela-config')">⚙️ Ajustes</button>
       <button onclick="fazerLogout()" class="btn-sair">🚪 Sair</button>
     </nav>
 
@@ -102,72 +99,92 @@
           <p id="total-faturado">R$ 0.00</p>
         </div>
         <div class="card-fin">
-          <h4>PEDIDOS PENDENTES</h4>
-          <p id="qtd-pendentes">0</p>
+          <h4>CUSTO TOTAL INSUMOS</h4>
+          <p id="total-custos">R$ 0.00</p>
         </div>
         <div class="card-fin">
-          <h4>PEDIDOS ENTREGUES</h4>
-          <p id="qtd-entregues">0</p>
+          <h4>MARGEM DE LUCRO MÉDIA</h4>
+          <p id="margem-media">0%</p>
         </div>
       </div>
     </div>
 
-    <!-- 3. CARDÁPIO E PRECIFICAÇÃO -->
-    <div id="tela-cardapio" class="tela">
+    <!-- 3. MERCADO & MRP -->
+    <div id="tela-mercado" class="tela">
       <div class="section-card">
-        <h3>Cadastrar Item no Cardápio / Precificação</h3>
+        <h3>Registro de Insumos / Mercado</h3>
         <div class="form-grid" style="margin-top: 10px;">
-          <input type="text" id="prod-nome" placeholder="Nome do produto">
-          <input type="number" id="prod-custo" placeholder="Custo de produção (R$)">
-          <input type="number" id="prod-preco" placeholder="Preço de venda (R$)">
+          <input type="text" id="ins-nome" placeholder="Nome do insumo (ex: Leite Condensado)">
+          <input type="number" id="ins-preco" placeholder="Preço pago (R$)">
+          <input type="number" id="ins-qtd" placeholder="Quantidade Comprada">
+          <select id="ins-unidade">
+            <option value="kg">Quilogramas (kg)</option>
+            <option value="g">Gramas (g)</option>
+            <option value="L">Litros (L)</option>
+            <option value="un">Unidades (un)</option>
+          </select>
         </div>
-        <button class="btn-action" onclick="adicionarProduto()">Salvar Produto</button>
+        <button class="btn-action" onclick="cadastrarInsumo()">Cadastrar Insumo</button>
       </div>
 
       <div class="section-card">
-        <h3>Produtos Cadastrados</h3>
+        <h3>Análise MRP - Insumos Mais Utilizados</h3>
         <table>
           <thead>
             <tr>
-              <th>Produto</th>
-              <th>Custo</th>
-              <th>Preço Venda</th>
-              <th>Lucro Est.</th>
+              <th>Insumo</th>
+              <th>Custo Unitário</th>
+              <th>Estoque Total</th>
+              <th>Uso Previsto</th>
             </tr>
           </thead>
-          <tbody id="lista-produtos"></tbody>
+          <tbody id="lista-insumos"></tbody>
         </table>
       </div>
     </div>
 
-    <!-- 4. ENCOMENDAS COM FOTO & WHATSAPP -->
+    <!-- 4. FICHA TÉCNICA E RECEITAS -->
+    <div id="tela-fichas" class="tela">
+      <div class="section-card">
+        <h3>Criar Ficha Técnica / Receita</h3>
+        <div class="form-grid" style="margin-top: 10px;">
+          <input type="text" id="rec-nome" placeholder="Nome do Prato / Produto">
+          <input type="number" id="rec-rendimento" placeholder="Rendimento (ex: 10 porções)">
+          <textarea id="rec-preparo" placeholder="Modo de Preparo passo a passo..." rows="3" style="grid-column: span 2;"></textarea>
+        </div>
+        <button class="btn-action" onclick="salvarReceita()">Salvar Ficha Técnica</button>
+      </div>
+
+      <div class="section-card">
+        <h3>Fichas Técnicas Cadastradas</h3>
+        <div id="lista-receitas"></div>
+      </div>
+    </div>
+
+    <!-- 5. ENCOMENDAS -->
     <div id="tela-encomendas" class="tela">
       <div class="section-card">
         <h3>Nova Encomenda</h3>
         <div class="form-grid" style="margin-top: 10px;">
           <input type="text" id="enc-cliente" placeholder="Nome do Cliente">
           <input type="text" id="enc-whatsapp" placeholder="WhatsApp (DDD + Número)">
-          <select id="enc-produto"></select>
+          <input type="text" id="enc-produto" placeholder="Produto">
+          <input type="number" id="enc-valor" placeholder="Valor Total (R$)">
           <input type="date" id="enc-data">
-          <div>
-            <label style="font-size: 12px;">Foto/Inspiração:</label>
-            <input type="file" id="enc-foto" accept="image/*">
-          </div>
         </div>
         <button class="btn-action" onclick="salvarEncomenda()">Registrar Encomenda</button>
       </div>
 
       <div class="section-card">
-        <h3>Lista de Encomendas</h3>
+        <h3>Encomendas</h3>
         <table>
           <thead>
             <tr>
-              <th>Foto</th>
               <th>Cliente</th>
               <th>Produto</th>
               <th>Data</th>
+              <th>Valor</th>
               <th>Status</th>
-              <th>Ações</th>
             </tr>
           </thead>
           <tbody id="lista-encomendas"></tbody>
@@ -175,7 +192,25 @@
       </div>
     </div>
 
-    <!-- 5. CALENDÁRIO -->
+    <!-- 6. GERADOR DE MEMES -->
+    <div id="tela-memes" class="tela">
+      <div class="section-card">
+        <h3>🎭 Gerador de Memes para Divulgação</h3>
+        <div class="form-grid" style="margin-top: 10px;">
+          <input type="text" id="meme-topo" placeholder="Texto de Cima (ex: QUANDO O CLIENTE PEDE)" oninput="gerarMeme()">
+          <input type="text" id="meme-baixo" placeholder="Texto de Baixo (ex: E LEMBRA QUE É HOJE!)" oninput="gerarMeme()">
+          <div>
+            <label style="font-size:12px;">Foto do Produto:</label>
+            <input type="file" id="meme-foto" accept="image/*" onchange="carregarImagemMeme(event)">
+          </div>
+        </div>
+        <canvas id="meme-canvas" width="400" height="400"></canvas>
+        <br>
+        <button class="btn-action" onclick="baixarMeme()">📥 Baixar Meme</button>
+      </div>
+    </div>
+
+    <!-- 7. CALENDÁRIO -->
     <div id="tela-calendario" class="tela">
       <h2>Calendário de Entregas</h2>
       <div class="section-card" style="margin-top: 15px;">
@@ -183,24 +218,20 @@
       </div>
     </div>
 
-    <!-- 6. AJUSTES & TEMA -->
+    <!-- 8. AJUSTES -->
     <div id="tela-config" class="tela">
       <div class="section-card">
-        <h3>Personalização do Negócio</h3>
-        <div class="form-grid" style="margin-top: 10px;">
+        <h3>Configurações</h3>
+        <div class="form-grid">
           <div>
-            <label>Segmento do App:</label>
+            <label>Segmento:</label>
             <select id="sel-segmento" onchange="atualizarSegmento()">
-              <option value="Açaí & Gelados">Açaí & Gelados</option>
-              <option value="Salgados & Fritos">Salgados & Fritos</option>
               <option value="Confeitaria & Doces">Confeitaria & Doces</option>
+              <option value="Salgados & Fritos">Salgados & Fritos</option>
+              <option value="Açaí & Gelados">Açaí & Gelados</option>
               <option value="Sushi & Japonesa">Sushi & Japonesa</option>
-              <option value="Outros / Geral">Outros / Geral</option>
+              <option value="Outros">Outros</option>
             </select>
-          </div>
-          <div>
-            <label>Cor Principal:</label>
-            <input type="color" id="sel-cor" value="#ff6b6b" onchange="mudarCorTema(this.value)">
           </div>
         </div>
       </div>
@@ -213,7 +244,7 @@
     <div id="gatinho-chat">
       <div id="gatinho-header">🐱 Assistente Gatinho</div>
       <div id="gatinho-mensagens">
-        <div><em>Miau! Sou seu assistente. Como posso ajudar com os seus dados hoje?</em></div>
+        <div><em>Miau! Sou seu assistente. Como posso ajudar?</em></div>
       </div>
       <div id="gatinho-input-container">
         <input type="text" id="gatinho-input" placeholder="Pergunte algo..." onkeypress="if(event.key==='Enter') enviarMensagemGatinho()">
@@ -225,14 +256,10 @@
 
   <script>
     let calendarInstance = null;
-    let usuarioAtual = null;
-
-    let produtos = [
-      { id: 1, nome: 'Bolo Decorado 1kg', custo: 25.00, preco: 65.00 },
-      { id: 2, nome: 'Cento de Salgados', custo: 20.00, preco: 50.00 }
-    ];
-
+    let insumos = [];
+    let receitas = [];
     let encomendas = [];
+    let memeImgObj = null;
 
     function navegarPara(idTela) {
       document.querySelectorAll('#app-principal .tela').forEach(t => t.classList.remove('ativa'));
@@ -240,158 +267,181 @@
       if (telaAlvo) telaAlvo.classList.add('ativa');
 
       if (idTela === 'tela-calendario') setTimeout(inicializarCalendario, 100);
+      if (idTela === 'tela-memes') gerarMeme();
     }
 
     function fazerLogin() {
       const email = document.getElementById('login-email').value;
-      if (!email) return alert('Por favor, informe seu e-mail!');
-
-      usuarioAtual = email;
+      if (!email) return alert('Informe seu e-mail!');
       document.getElementById('tela-login').style.display = 'none';
       document.getElementById('app-principal').style.display = 'block';
-
-      renderizarProdutos();
-      renderizarEncomendas();
-      atualizarResumoFinanceiro();
       navegarPara('tela-dashboard');
     }
 
     function fazerLogout() {
-      usuarioAtual = null;
       document.getElementById('app-principal').style.display = 'none';
       document.getElementById('tela-login').style.display = 'block';
     }
 
-    // Segmento e Cores
     function atualizarSegmento() {
       const seg = document.getElementById('sel-segmento').value;
       document.getElementById('segmento-atual').innerText = seg;
     }
 
-    function mudarCorTema(cor) {
-      document.documentElement.style.setProperty('--primary-color', cor);
+    // Mercado & MRP
+    function cadastrarInsumo() {
+      const nome = document.getElementById('ins-nome').value;
+      const preco = parseFloat(document.getElementById('ins-preco').value || 0);
+      const qtd = parseFloat(document.getElementById('ins-qtd').value || 1);
+      const un = document.getElementById('ins-unidade').value;
+
+      if (!nome || !preco) return alert('Informe o nome e o preço do insumo!');
+
+      const custoUnitario = preco / qtd;
+      insumos.push({ id: Date.now(), nome, preco, qtd, un, custoUnitario });
+      renderizarInsumos();
+      atualizarDashboard();
+
+      document.getElementById('ins-nome').value = '';
+      document.getElementById('ins-preco').value = '';
+      document.getElementById('ins-qtd').value = '';
     }
 
-    // Cardápio
-    function adicionarProduto() {
-      const nome = document.getElementById('prod-nome').value;
-      const custo = parseFloat(document.getElementById('prod-custo').value || 0);
-      const preco = parseFloat(document.getElementById('prod-preco').value || 0);
-
-      if (!nome || !preco) return alert('Informe ao menos o nome e o preço do produto!');
-
-      produtos.push({ id: Date.now(), nome, custo, preco });
-      renderizarProdutos();
-
-      document.getElementById('prod-nome').value = '';
-      document.getElementById('prod-custo').value = '';
-      document.getElementById('prod-preco').value = '';
-    }
-
-    function renderizarProdutos() {
-      const tbody = document.getElementById('lista-produtos');
-      const selectProd = document.getElementById('enc-produto');
+    function renderizarInsumos() {
+      const tbody = document.getElementById('lista-insumos');
       tbody.innerHTML = '';
-      selectProd.innerHTML = '';
-
-      produtos.forEach(p => {
-        const lucro = p.preco - p.custo;
+      insumos.forEach(i => {
         tbody.innerHTML += `
           <tr>
-            <td><b>${p.nome}</b></td>
-            <td>R$ ${p.custo.toFixed(2)}</td>
-            <td>R$ ${p.preco.toFixed(2)}</td>
-            <td style="color: green;">R$ ${lucro.toFixed(2)}</td>
+            <td><b>${i.nome}</b></td>
+            <td>R$ ${i.custoUnitario.toFixed(2)} / ${i.un}</td>
+            <td>${i.qtd} ${i.un}</td>
+            <td style="color: green;">Alta Demanda</td>
           </tr>
         `;
-        selectProd.innerHTML += `<option value="${p.id}">${p.nome} (R$ ${p.preco.toFixed(2)})</option>`;
+      });
+    }
+
+    // Fichas Técnicas
+    function salvarReceita() {
+      const nome = document.getElementById('rec-nome').value;
+      const rend = document.getElementById('rec-rendimento').value;
+      const prep = document.getElementById('rec-preparo').value;
+
+      if (!nome) return alert('Informe o nome da receita!');
+
+      receitas.push({ id: Date.now(), nome, rend, prep });
+      renderizarReceitas();
+
+      document.getElementById('rec-nome').value = '';
+      document.getElementById('rec-rendimento').value = '';
+      document.getElementById('rec-preparo').value = '';
+    }
+
+    function renderizarReceitas() {
+      const container = document.getElementById('lista-receitas');
+      container.innerHTML = '';
+      receitas.forEach(r => {
+        container.innerHTML += `
+          <div style="border-bottom: 1px solid #eee; padding: 10px 0;">
+            <h4>🍳 ${r.nome} <small>(Rendimento: ${r.rend})</small></h4>
+            <p style="font-size: 13px; color: #555; margin-top: 5px;">${r.prep}</p>
+          </div>
+        `;
       });
     }
 
     // Encomendas
     function salvarEncomenda() {
       const cliente = document.getElementById('enc-cliente').value;
-      const wsp = document.getElementById('enc-whatsapp').value;
-      const prodId = document.getElementById('enc-produto').value;
+      const prod = document.getElementById('enc-produto').value;
+      const valor = parseFloat(document.getElementById('enc-valor').value || 0);
       const data = document.getElementById('enc-data').value;
-      const fotoInput = document.getElementById('enc-foto');
 
-      if (!cliente || !data || !prodId) return alert('Preencha os campos obrigatórios!');
+      if (!cliente || !valor) return alert('Preencha os campos obrigatórios!');
 
-      const prod = produtos.find(p => p.id == prodId);
-      
-      const criarObjeto = (fotoBase64) => {
-        encomendas.push({
-          id: Date.now(),
-          cliente,
-          wsp,
-          produtoNome: prod.nome,
-          valor: prod.preco,
-          data,
-          status: 'Pendente',
-          foto: fotoBase64 || ''
-        });
-        renderizarEncomendas();
-        atualizarResumoFinanceiro();
-        alert('Encomenda cadastrada!');
-      };
-
-      if (fotoInput.files && fotoInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = (e) => criarObjeto(e.target.result);
-        reader.readAsDataURL(fotoInput.files[0]);
-      } else {
-        criarObjeto('');
-      }
+      encomendas.push({ id: Date.now(), cliente, prod, valor, data, status: 'Pendente' });
+      renderizarEncomendas();
+      atualizarDashboard();
     }
 
     function renderizarEncomendas() {
       const tbody = document.getElementById('lista-encomendas');
       tbody.innerHTML = '';
-
       encomendas.forEach(e => {
-        const msgWsp = encodeURIComponent(`Olá ${e.cliente}! Seu pedido de ${e.produtoNome} teve o status atualizado para: *${e.status}*.`);
-        const linkWsp = `https://wa.me/55${e.wsp.replace(/\D/g, '')}?text=${msgWsp}`;
-        const imgTag = e.foto ? `<img src="${e.foto}" class="img-preview">` : 'Sem foto';
-
         tbody.innerHTML += `
           <tr>
-            <td>${imgTag}</td>
             <td><b>${e.cliente}</b></td>
-            <td>${e.produtoNome}<br><small>R$ ${e.valor.toFixed(2)}</small></td>
+            <td>${e.prod}</td>
             <td>${e.data}</td>
-            <td>
-              <select onchange="mudarStatus(${e.id}, this.value)">
-                <option value="Pendente" ${e.status === 'Pendente' ? 'selected' : ''}>Pendente</option>
-                <option value="Em Produção" ${e.status === 'Em Produção' ? 'selected' : ''}>Em Produção</option>
-                <option value="Entregue" ${e.status === 'Entregue' ? 'selected' : ''}>Entregue</option>
-              </select>
-            </td>
-            <td>
-              ${e.wsp ? `<a href="${linkWsp}" target="_blank" class="btn-wsp">📲 Whats</a>` : '-'}
-            </td>
+            <td>R$ ${e.valor.toFixed(2)}</td>
+            <td>${e.status}</td>
           </tr>
         `;
       });
     }
 
-    function mudarStatus(id, novoStatus) {
-      const enc = encomendas.find(e => e.id === id);
-      if (enc) enc.status = novoStatus;
-      atualizarResumoFinanceiro();
-      renderizarEncomendas();
-    }
-
-    function atualizarResumoFinanceiro() {
-      let fat = 0, pend = 0, ent = 0;
-      encomendas.forEach(e => {
-        fat += e.valor;
-        if (e.status === 'Entregue') ent++; else pend++;
-      });
+    function atualizarDashboard() {
+      let fat = 0, custoTotal = 0;
+      encomendas.forEach(e => fat += e.valor);
+      insumos.forEach(i => custoTotal += i.preco);
 
       document.getElementById('total-faturado').innerText = `R$ ${fat.toFixed(2)}`;
-      document.getElementById('qtd-pendentes').innerText = pend;
-      document.getElementById('qtd-entregues').innerText = ent;
+      document.getElementById('total-custos').innerText = `R$ ${custoTotal.toFixed(2)}`;
+      
+      const margem = fat > 0 ? (((fat - custoTotal) / fat) * 100).toFixed(1) : 0;
+      document.getElementById('margem-media').innerText = `${margem}%`;
+    }
+
+    // Gerador de Memes
+    function carregarImagemMeme(e) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        memeImgObj = new Image();
+        memeImgObj.onload = function() { gerarMeme(); }
+        memeImgObj.src = event.target.result;
+      }
+      if (e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+    }
+
+    function gerarMeme() {
+      const canvas = document.getElementById('meme-canvas');
+      const ctx = canvas.getContext('2d');
+      const topo = document.getElementById('meme-topo').value.toUpperCase();
+      const baixo = document.getElementById('meme-baixo').value.toUpperCase();
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (memeImgObj) {
+        ctx.drawImage(memeImgObj, 0, 0, canvas.width, canvas.height);
+      } else {
+        ctx.fillStyle = '#ff6b6b';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      ctx.fillStyle = 'white';
+      ctx.strokeStyle = 'black';
+      ctx.lineWidth = 4;
+      ctx.font = '28px Impact';
+      ctx.textAlign = 'center';
+
+      if (topo) {
+        ctx.strokeText(topo, canvas.width / 2, 40);
+        ctx.fillText(topo, canvas.width / 2, 40);
+      }
+
+      if (baixo) {
+        ctx.strokeText(baixo, canvas.width / 2, canvas.height - 20);
+        ctx.fillText(baixo, canvas.width / 2, canvas.height - 20);
+      }
+    }
+
+    function baixarMeme() {
+      const canvas = document.getElementById('meme-canvas');
+      const link = document.createElement('a');
+      link.download = 'meme-foodapp.png';
+      link.href = canvas.toDataURL();
+      link.click();
     }
 
     // Calendário
@@ -400,16 +450,10 @@
       if (!calendarEl) return;
       if (calendarInstance) calendarInstance.destroy();
 
-      const eventos = encomendas.map(e => ({
-        title: `${e.cliente} - ${e.produtoNome}`,
-        start: e.data,
-        color: e.status === 'Entregue' ? '#2ecc71' : '#e67e22'
-      }));
-
       calendarInstance = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         locale: 'pt-br',
-        events: eventos
+        events: encomendas.map(e => ({ title: `${e.cliente} (R$ ${e.valor})`, start: e.data }))
       });
       calendarInstance.render();
     }
@@ -429,7 +473,7 @@
       areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: right;"><b>Você:</b> ${msg}</div>`;
 
       setTimeout(() => {
-        areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);"><b>🐱 Gatinho:</b> Miau! Você tem ${encomendas.length} encomenda(s) registrada(s).</div>`;
+        areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);"><b>🐱 Gatinho:</b> Miau! Você tem ${insumos.length} insumos e ${encomendas.length} encomendas cadastradas.</div>`;
         areaMsgs.scrollTop = areaMsgs.scrollHeight;
       }, 500);
 
