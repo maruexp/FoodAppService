@@ -20,14 +20,20 @@
     .tela { display: none; }
     .tela.ativa { display: block; }
 
-    /* Login */
-    #tela-login {
-      max-width: 380px; margin: 60px auto; padding: 30px; background: white;
+    /* Autenticação & Cadastro */
+    #tela-auth {
+      max-width: 400px; margin: 50px auto; padding: 30px; background: white;
       border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
     }
-    #tela-login h2 { margin-bottom: 20px; color: var(--primary-color); }
-    #tela-login input { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd; border-radius: 6px; }
-    #tela-login button { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    #tela-auth h2 { margin-bottom: 15px; color: var(--primary-color); }
+    .auth-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid #eee; }
+    .auth-tabs button { flex: 1; padding: 10px; border: none; background: none; font-weight: bold; cursor: pointer; color: #777; }
+    .auth-tabs button.ativo { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+    .auth-form { display: none; }
+    .auth-form.ativo { display: block; }
+    
+    input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; margin-bottom: 10px; }
+    .btn-main { width: 100%; padding: 12px; background: var(--primary-color); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
 
     /* Menu Navegação */
     nav { display: flex; gap: 8px; background: #2c3e50; padding: 12px 15px; border-radius: 8px; margin-bottom: 20px; align-items: center; flex-wrap: wrap; }
@@ -44,7 +50,6 @@
     /* Componentes Genéricos */
     .section-card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 20px; }
     .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-    input, select, textarea { padding: 10px; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
     .btn-action { background: var(--primary-color); color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
 
     /* Tabelas */
@@ -52,29 +57,50 @@
     th, td { border-bottom: 1px solid #eee; padding: 10px; text-align: left; font-size: 14px; }
     th { background: #f8f9fa; }
 
-    /* Gerador de Memes IA */
-    #meme-canvas { border: 2px dashed #ccc; border-radius: 8px; max-width: 100%; background: #fff; margin-top: 15px; }
-    .status-loading { color: var(--primary-color); font-weight: bold; margin-top: 10px; display: none; }
-
-    /* Gatinho IA Widget */
+    /* Widget Gatinho IA */
     #gatinho-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
     #gatinho-btn { background: var(--primary-color); border: none; border-radius: 50%; width: 55px; height: 55px; font-size: 26px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-    #gatinho-chat { display: none; position: absolute; bottom: 65px; right: 0; width: 300px; height: 380px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; }
-    #gatinho-header { background: var(--primary-color); color: white; padding: 10px; font-weight: bold; }
-    #gatinho-mensagens { flex: 1; padding: 10px; overflow-y: auto; font-size: 13px; background: #fafafa; }
+    #gatinho-chat { display: none; position: absolute; bottom: 65px; right: 0; width: 340px; height: 430px; background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); flex-direction: column; overflow: hidden; }
+    #gatinho-header { background: var(--primary-color); color: white; padding: 10px 15px; font-weight: bold; }
+    #gatinho-mensagens { flex: 1; padding: 12px; overflow-y: auto; font-size: 13px; background: #fafafa; }
     #gatinho-input-container { display: flex; border-top: 1px solid #eee; }
-    #gatinho-input { flex: 1; border: none; padding: 10px; outline: none; }
+    #gatinho-input { flex: 1; border: none; padding: 10px; outline: none; margin-bottom: 0; }
     #gatinho-send { background: var(--primary-color); color: white; border: none; padding: 10px 15px; cursor: pointer; }
+    .chat-img-meme { width: 100%; border-radius: 8px; margin-top: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
   </style>
 </head>
 <body>
 
-  <!-- 1. LOGIN -->
-  <div id="tela-login" class="tela ativa">
+  <!-- 1. TELA DE AUTENTICAÇÃO / CADASTRO COM CÓDIGO -->
+  <div id="tela-auth" class="tela ativa">
     <h2>🐱 FoodApp</h2>
-    <input type="email" id="login-email" placeholder="Seu e-mail">
-    <input type="password" id="login-senha" placeholder="Sua senha">
-    <button onclick="fazerLogin()">Entrar / Cadastrar</button>
+    
+    <div class="auth-tabs">
+      <button id="tab-login-btn" class="ativo" onclick="mudarAbaAuth('login')">Entrar</button>
+      <button id="tab-cad-btn" onclick="mudarAbaAuth('cad')">Cadastrar</button>
+    </div>
+
+    <!-- Form de Login -->
+    <div id="form-login" class="auth-form ativo">
+      <input type="email" id="login-email" placeholder="Seu e-mail">
+      <input type="password" id="login-senha" placeholder="Sua senha">
+      <button class="btn-main" onclick="fazerLogin()">Entrar</button>
+    </div>
+
+    <!-- Form de Cadastro Passo 1 -->
+    <div id="form-cad-1" class="auth-form">
+      <input type="text" id="cad-nome" placeholder="Seu Nome / Nome do Negócio">
+      <input type="email" id="cad-email" placeholder="Seu e-mail">
+      <input type="password" id="cad-senha" placeholder="Crie uma senha">
+      <button class="btn-main" onclick="enviarCodigoVerificacao()">Enviar Código por E-mail</button>
+    </div>
+
+    <!-- Form de Cadastro Passo 2 (Validação do Código) -->
+    <div id="form-cad-2" class="auth-form">
+      <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Enviamos um código de 6 dígitos para o seu e-mail!</p>
+      <input type="text" id="cad-codigo" placeholder="Código de 6 dígitos (ex: 123456)" maxlength="6" style="text-align: center; font-size: 18px; letter-spacing: 4px;">
+      <button class="btn-main" onclick="validarCodigoEFinalizar()">Confirmar e Acessar</button>
+    </div>
   </div>
 
   <!-- APP PRINCIPAL -->
@@ -84,7 +110,6 @@
       <button onclick="navegarPara('tela-mercado')">🛒 Mercado & MRP</button>
       <button onclick="navegarPara('tela-fichas')">📖 Ficha Técnica</button>
       <button onclick="navegarPara('tela-encomendas')">📦 Encomendas</button>
-      <button onclick="navegarPara('tela-memes')">🎨 Meme IA</button>
       <button onclick="navegarPara('tela-calendario')">📅 Calendário</button>
       <button onclick="navegarPara('tela-config')">⚙️ Ajustes</button>
       <button onclick="fazerLogout()" class="btn-sair">🚪 Sair</button>
@@ -192,29 +217,7 @@
       </div>
     </div>
 
-    <!-- 6. GERADOR DE MEMES COM IA -->
-    <div id="tela-memes" class="tela">
-      <div class="section-card">
-        <h3>🎨 Gerador de Memes por IA</h3>
-        <p style="font-size: 13px; color: #666; margin-bottom: 12px;">Descreva a imagem e os textos que a IA criará o meme perfeito para suas redes sociais!</p>
-        
-        <div class="form-grid">
-          <input type="text" id="meme-prompt" placeholder="Ideia da Imagem (ex: gatinho chique comendo sushi de terno)" style="grid-column: span 2;">
-          <input type="text" id="meme-topo" placeholder="Texto Superior (ex: SEXTOU NA CONFEITARIA)" oninput="desenharTextosMeme()">
-          <input type="text" id="meme-baixo" placeholder="Texto Inferior (ex: HORA DO BOLO!)" oninput="desenharTextosMeme()">
-        </div>
-
-        <button class="btn-action" onclick="gerarMemeComIA()">✨ Gerar Meme com IA</button>
-        <p id="status-ia" class="status-loading">⏳ A IA está desenhando seu meme, aguarde alguns segundos...</p>
-        
-        <br>
-        <canvas id="meme-canvas" width="450" height="450"></canvas>
-        <br>
-        <button class="btn-action" onclick="baixarMeme()" style="background: #27ae60;">📥 Baixar Meme</button>
-      </div>
-    </div>
-
-    <!-- 7. CALENDÁRIO -->
+    <!-- 6. CALENDÁRIO -->
     <div id="tela-calendario" class="tela">
       <h2>Calendário de Entregas</h2>
       <div class="section-card" style="margin-top: 15px;">
@@ -222,7 +225,7 @@
       </div>
     </div>
 
-    <!-- 8. AJUSTES -->
+    <!-- 7. AJUSTES -->
     <div id="tela-config" class="tela">
       <div class="section-card">
         <h3>Configurações</h3>
@@ -243,15 +246,15 @@
 
   </div>
 
-  <!-- WIDGET GATINHO IA -->
+  <!-- WIDGET GATINHO IA COM GERADOR DE MEMES -->
   <div id="gatinho-widget">
     <div id="gatinho-chat">
       <div id="gatinho-header">🐱 Assistente Gatinho</div>
       <div id="gatinho-mensagens">
-        <div><em>Miau! Sou seu assistente. Como posso ajudar?</em></div>
+        <div><em>Miau! Sou seu assistente. Me peça qualquer coisa ou digite "crie um meme de..." para eu desenhar!</em></div>
       </div>
       <div id="gatinho-input-container">
-        <input type="text" id="gatinho-input" placeholder="Pergunte algo..." onkeypress="if(event.key==='Enter') enviarMensagemGatinho()">
+        <input type="text" id="gatinho-input" placeholder="Digite uma dúvida ou peça um meme..." onkeypress="if(event.key==='Enter') enviarMensagemGatinho()">
         <button id="gatinho-send" onclick="enviarMensagemGatinho()">>></button>
       </div>
     </div>
@@ -263,28 +266,67 @@
     let insumos = [];
     let receitas = [];
     let encomendas = [];
-    let imagemIAGerada = null;
+    let codigoGeradoTemp = null;
 
+    // Autenticação & Cadastro
+    function mudarAbaAuth(aba) {
+      document.querySelectorAll('.auth-tabs button').forEach(b => b.classList.remove('ativo'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('ativo'));
+
+      if (aba === 'login') {
+        document.getElementById('tab-login-btn').classList.add('ativo');
+        document.getElementById('form-login').classList.add('ativo');
+      } else {
+        document.getElementById('tab-cad-btn').classList.add('ativo');
+        document.getElementById('form-cad-1').classList.add('ativo');
+      }
+    }
+
+    function fazerLogin() {
+      const email = document.getElementById('login-email').value;
+      if (!email) return alert('Informe seu e-mail!');
+      
+      document.getElementById('tela-auth').style.display = 'none';
+      document.getElementById('app-principal').style.display = 'block';
+      navegarPara('tela-dashboard');
+    }
+
+    function enviarCodigoVerificacao() {
+      const email = document.getElementById('cad-email').value;
+      if (!email) return alert('Informe seu e-mail para receber o código!');
+
+      codigoGeradoTemp = Math.floor(100000 + Math.random() * 900000).toString();
+      alert(`[SIMULAÇÃO E-MAIL]\nSeu código de verificação é: ${codigoGeradoTemp}`);
+
+      document.getElementById('form-cad-1').classList.remove('ativo');
+      document.getElementById('form-cad-2').classList.add('ativo');
+    }
+
+    function validarCodigoEFinalizar() {
+      const codigoDigitado = document.getElementById('cad-codigo').value.trim();
+      if (codigoDigitado === codigoGeradoTemp) {
+        alert('E-mail verificado com sucesso!');
+        document.getElementById('tela-auth').style.display = 'none';
+        document.getElementById('app-principal').style.display = 'block';
+        navegarPara('tela-dashboard');
+      } else {
+        alert('Código incorreto. Tente novamente!');
+      }
+    }
+
+    function fazerLogout() {
+      document.getElementById('app-principal').style.display = 'none';
+      document.getElementById('tela-auth').style.display = 'block';
+      mudarAbaAuth('login');
+    }
+
+    // Navegação
     function navegarPara(idTela) {
       document.querySelectorAll('#app-principal .tela').forEach(t => t.classList.remove('ativa'));
       const telaAlvo = document.getElementById(idTela);
       if (telaAlvo) telaAlvo.classList.add('ativa');
 
       if (idTela === 'tela-calendario') setTimeout(inicializarCalendario, 100);
-      if (idTela === 'tela-memes' && !imagemIAGerada) desenharTextosMeme();
-    }
-
-    function fazerLogin() {
-      const email = document.getElementById('login-email').value;
-      if (!email) return alert('Informe seu e-mail!');
-      document.getElementById('tela-login').style.display = 'none';
-      document.getElementById('app-principal').style.display = 'block';
-      navegarPara('tela-dashboard');
-    }
-
-    function fazerLogout() {
-      document.getElementById('app-principal').style.display = 'none';
-      document.getElementById('tela-login').style.display = 'block';
     }
 
     function atualizarSegmento() {
@@ -397,72 +439,6 @@
       document.getElementById('margem-media').innerText = `${margem}%`;
     }
 
-    // MEME GERADO VIA IA (Pollinations.ai API)
-    function gerarMemeComIA() {
-      const promptText = document.getElementById('meme-prompt').value.trim();
-      const statusTxt = document.getElementById('status-ia');
-
-      if (!promptText) return alert('Descreva o que você quer ver no meme!');
-
-      statusTxt.style.display = 'block';
-
-      // URL de geração dinâmica por IA
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText + ' funny meme style, high quality')}?width=500&height=500&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
-
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = function() {
-        imagemIAGerada = img;
-        statusTxt.style.display = 'none';
-        desenharTextosMeme();
-      };
-      img.onerror = function() {
-        statusTxt.style.display = 'none';
-        alert('Erro ao gerar imagem por IA. Tente outro prompt.');
-      };
-      img.src = imageUrl;
-    }
-
-    function desenharTextosMeme() {
-      const canvas = document.getElementById('meme-canvas');
-      const ctx = canvas.getContext('2d');
-      const topo = document.getElementById('meme-topo').value.toUpperCase();
-      const baixo = document.getElementById('meme-baixo').value.toUpperCase();
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (imagemIAGerada) {
-        ctx.drawImage(imagemIAGerada, 0, 0, canvas.width, canvas.height);
-      } else {
-        ctx.fillStyle = '#ff6b6b';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
-
-      ctx.fillStyle = 'white';
-      ctx.strokeStyle = 'black';
-      ctx.lineWidth = 4;
-      ctx.font = '32px Impact';
-      ctx.textAlign = 'center';
-
-      if (topo) {
-        ctx.strokeText(topo, canvas.width / 2, 50);
-        ctx.fillText(topo, canvas.width / 2, 50);
-      }
-
-      if (baixo) {
-        ctx.strokeText(baixo, canvas.width / 2, canvas.height - 25);
-        ctx.fillText(baixo, canvas.width / 2, canvas.height - 25);
-      }
-    }
-
-    function baixarMeme() {
-      const canvas = document.getElementById('meme-canvas');
-      const link = document.createElement('a');
-      link.download = 'meme-ia-foodapp.png';
-      link.href = canvas.toDataURL();
-      link.click();
-    }
-
     // Calendário
     function inicializarCalendario() {
       const calendarEl = document.getElementById('calendar');
@@ -477,7 +453,7 @@
       calendarInstance.render();
     }
 
-    // Gatinho Widget
+    // Chat Gatinho & IA Geradora de Memes no Chat
     function toggleGatinho() {
       const chat = document.getElementById('gatinho-chat');
       chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
@@ -491,10 +467,31 @@
       const areaMsgs = document.getElementById('gatinho-mensagens');
       areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: right;"><b>Você:</b> ${msg}</div>`;
 
-      setTimeout(() => {
-        areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);"><b>🐱 Gatinho:</b> Miau! O gerador de memes por IA está pronto para criar artes para suas divulgações.</div>`;
+      const msgLower = msg.toLowerCase();
+      
+      // Checa se o usuário pediu para criar/gerar um meme/imagem
+      if (msgLower.includes('meme') || msgLower.includes('imagem') || msgLower.includes('desenhe') || msgLower.includes('crie')) {
+        areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);"><b>🐱 Gatinho:</b> Miau! Desenhando seu meme com IA, aguarde um segundo...</div>`;
         areaMsgs.scrollTop = areaMsgs.scrollHeight;
-      }, 500);
+
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(msg + ' funny meme, high quality')}?width=400&height=400&nologo=true&seed=${Math.floor(Math.random()*1000)}`;
+
+        setTimeout(() => {
+          areaMsgs.innerHTML += `
+            <div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);">
+              <b>🐱 Gatinho:</b> Aqui está o seu meme!<br>
+              <img src="${imageUrl}" class="chat-img-meme" alt="Meme IA">
+            </div>
+          `;
+          areaMsgs.scrollTop = areaMsgs.scrollHeight;
+        }, 1200);
+
+      } else {
+        setTimeout(() => {
+          areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);"><b>🐱 Gatinho:</b> Miau! Você possui ${encomendas.length} encomendas e ${insumos.length} insumos no seu estoque.</div>`;
+          areaMsgs.scrollTop = areaMsgs.scrollHeight;
+        }, 500);
+      }
 
       input.value = '';
     }
