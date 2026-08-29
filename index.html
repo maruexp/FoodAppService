@@ -3,523 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Food App Service</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <title>FoodAppService</title>
+
+  <!-- Biblioteca do Calendário (FullCalendar) -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #fff5f5; margin: 0; padding: 20px; color: #333; }
-    .container { max-width: 500px; margin: 0 auto; background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    h1, h2, h3 { text-align: center; color: #ff6b6b; margin-bottom: 10px; }
-    .mascote-box { text-align: center; font-size: 50px; margin: 10px 0; background: #fff0f0; padding: 10px; border-radius: 12px; }
-    label { font-weight: bold; display: block; margin-top: 12px; font-size: 14px; }
-    input, select, button, textarea { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
-    button { background: #ff6b6b; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 15px; margin-top: 15px; }
-    button:hover { background: #ee5253; }
-    .btn-secundario { background: #74b9ff; margin-top: 8px; }
-    .btn-secundario:hover { background: #0984e3; }
-    .btn-sair { background: #b2bec3; width: auto; float: right; padding: 5px 10px; font-size: 12px; margin-top: 0; }
-    .hidden { display: none; }
-    
-    .dashboard-financeiro { display: flex; gap: 10px; margin: 15px 0; }
-    .card-fin { flex: 1; background: #fff0f0; padding: 12px; border-radius: 10px; text-align: center; }
-    .card-fin h4 { margin: 0; font-size: 12px; color: #666; }
-    .card-fin p { margin: 5px 0 0 0; font-size: 18px; font-weight: bold; color: #ff6b6b; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f4f6f9; color: #333; padding: 20px; }
 
-    .chat-container { background: #fff5f5; border: 1px solid #ffccd5; border-radius: 12px; padding: 12px; margin-top: 15px; }
-    .chat-log { max-height: 150px; overflow-y: auto; font-size: 13px; margin-bottom: 10px; }
-    .chat-msg { margin: 5px 0; padding: 6px 10px; border-radius: 8px; }
-    .chat-msg.user { background: #74b9ff; color: white; text-align: right; margin-left: 20%; }
-    .chat-msg.bot { background: white; border: 1px solid #ffccd5; color: #333; margin-right: 20%; }
+    /* Controle de Visibilidade de Telas */
+    .tela { display: none; }
+    .tela.ativa { display: block; }
 
-    .calendario-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 10px; text-align: center; font-size: 12px; }
-    .cal-dia-head { font-weight: bold; color: #ff6b6b; padding: 5px 0; }
-    .cal-dia { background: #fafafa; border: 1px solid #eee; padding: 8px 2px; border-radius: 6px; min-height: 40px; position: relative; }
-    .cal-dia.com-pedido { background: #ffeaa7; border-color: #fdcb6e; font-weight: bold; }
+    /* Tela de Login */
+    #tela-login {
+      max-width: 380px; margin: 80px auto; padding: 30px; background: white;
+      border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center;
+    }
+    #tela-login h2 { margin-bottom: 20px; color: #ff6b6b; }
+    #tela-login input {
+      width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid #ddd;
+      border-radius: 6px; font-size: 14px;
+    }
+    #tela-login button {
+      width: 100%; padding: 12px; background: #ff6b6b; color: white; border: none;
+      border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
 
-    .filtros-pedidos { display: flex; gap: 5px; margin-bottom: 15px; }
-    .btn-filtro { flex: 1; padding: 6px; font-size: 12px; background: #f1f2f6; color: #2d3436; margin-top: 0; border: 1px solid #dfe4ea; }
-    .btn-filtro.ativo { background: #ff6b6b; color: white; border-color: #ff6b6b; }
+    /* Navegação / Menu */
+    nav { display: flex; gap: 10px; background: #2c3e50; padding: 12px 20px; border-radius: 8px; margin-bottom: 20px; align-items: center; }
+    nav button { background: #34495e; color: white; border: none; padding: 10px 18px; cursor: pointer; border-radius: 6px; font-weight: bold; }
+    nav button:hover { background: #ff6b6b; }
+    .btn-sair { margin-left: auto; background: #e74c3c !important; }
 
-    .card-pedido { background: #fafafa; border-left: 5px solid #ff6b6b; padding: 12px; margin-top: 12px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    .card-pedido.entregue { border-left-color: #2ecc71; opacity: 0.85; }
-    .card-pedido h4 { margin: 0 0 5px 0; color: #2d3436; font-size: 16px; display: flex; justify-content: space-between; }
-    .card-pedido p { margin: 3px 0; font-size: 13px; color: #636e72; }
-    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #ffeaa7; color: #d63031; }
-    .badge.entregue { background: #d4edda; color: #155724; }
-    .badge.preparo { background: #cce5ff; color: #004085; }
-    .box-item { background: #fff0f0; padding: 10px; border-radius: 8px; margin-top: 10px; }
-    .btn-status { width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; margin-right: 5px; background: #6c5ce7; }
-    .btn-whatsapp { background: #25D366; text-decoration: none; color: white; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: bold; display: inline-block; margin-top: 8px; margin-right: 5px; }
-    .btn-deletar { background: #ff7675; width: auto; padding: 5px 10px; font-size: 12px; margin-top: 8px; display: inline-block; }
+    /* Dashboard Cards */
+    .dashboard-financeiro { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px; }
+    .card-fin { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center; }
+    .card-fin h4 { color: #7f8c8d; margin-bottom: 8px; font-size: 12px; }
+    .card-fin p { font-size: 22px; font-weight: bold; color: #2c3e50; }
 
-    .item-mercado { display: flex; align-items: center; justify-content: space-between; background: #fafafa; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #eee; }
-    .item-mercado.comprado { background: #e8f8f5; text-decoration: line-through; color: #a0a0a0; }
-    .item-mercado input[type="checkbox"] { width: auto; margin: 0 10px 0 0; cursor: pointer; transform: scale(1.3); }
+    /* Calendário Container */
+    #calendar-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top: 15px; }
+
+    /* Widget Gatinho IA */
+    #gatinho-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+    #gatinho-btn { background: #ff6b6b; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 28px; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+    #gatinho-chat {
+      display: none; position: absolute; bottom: 70px; right: 0; width: 320px; height: 400px;
+      background: white; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      flex-direction: column; overflow: hidden;
+    }
+    #gatinho-header { background: #ff6b6b; color: white; padding: 12px; font-weight: bold; }
+    #gatinho-mensagens { flex: 1; padding: 12px; overflow-y: auto; font-size: 14px; background: #fafafa; }
+    #gatinho-input-container { display: flex; border-top: 1px solid #eee; }
+    #gatinho-input { flex: 1; border: none; padding: 12px; outline: none; }
+    #gatinho-send { background: #ff6b6b; color: white; border: none; padding: 12px 18px; cursor: pointer; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- Tela 0: Autenticação -->
-    <div id="tela-auth">
-      <h2>FoodApp Service 🐱</h2>
-      <p style="text-align:center;">Entre com sua conta ou cadastre-se para sincronizar seus dados.</p>
-      
-      <label for="auth-email">E-mail:</label>
-      <input type="email" id="auth-email" placeholder="seuemail@exemplo.com">
+  <!-- TELA 1: LOGIN / CADASTRO -->
+  <div id="tela-login" class="tela ativa">
+    <h2>🐱 FoodApp</h2>
+    <input type="email" id="login-email" placeholder="Seu e-mail">
+    <input type="password" id="login-senha" placeholder="Sua senha">
+    <button onclick="fazerLogin()">Entrar / Cadastrar</button>
+  </div>
 
-      <label for="auth-senha">Senha:</label>
-      <input type="password" id="auth-senha" placeholder="Sua senha secreta">
+  <!-- APLICAÇÃO PRINCIPAL (EXIBIDA APÓS O LOGIN) -->
+  <div id="app-principal" style="display: none;">
+    
+    <!-- Menu Superior -->
+    <nav>
+      <button onclick="navegarPara('tela-dashboard')">📊 Dashboard</button>
+      <button onclick="navegarPara('tela-calendario')">📅 Calendário</button>
+      <button onclick="fazerLogout()" class="btn-sair">🚪 Sair</button>
+    </nav>
 
-      <button onclick="fazerLogin()">Entrar no Meu App</button>
-      <button class="btn-secundario" onclick="criarConta()">Criar Nova Conta</button>
-    </div>
-
-    <!-- Tela 1: Setup Inicial do Perfil -->
-    <div id="tela-setup" class="hidden">
-      <h2>Configurar Seu Negócio 🐱</h2>
-      <div class="mascote-box" id="avatar-preview">🍰🐱🎂</div>
-
-      <label for="nome-negocio">Nome do seu Negócio / Cozinha:</label>
-      <input type="text" id="nome-negocio" placeholder="Ex: Doces da Maria">
-
-      <label for="segmento">Segmento da Alimentação:</label>
-      <select id="segmento" onchange="atualizarGatinho()">
-        <option value="confeitaria">🍰 Confeitaria / Docaria (Gatinho Confeiteiro)</option>
-        <option value="marmitaria">🍱 Marmitaria / Almoço (Gatinho Chef)</option>
-        <option value="padaria">🍞 Padaria / Massas (Gatinho Padeiro)</option>
-        <option value="pizzaria">🍕 Pizzaria (Gatinho Pizzaiolo)</option>
-        <option value="lanchonete">🍔 Lanchonete / Fast Food (Gatinho Atendente)</option>
-        <option value="sushi">🍣 Japa / Sushi (Gatinho Sushiman)</option>
-        <option value="acai">🍧 Açaí / Gelados (Gatinho do Açaí)</option>
-        <option value="empadas">🥧 Empadas / Tortas (Gatinho Empadeiro)</option>
-        <option value="salgados">🥟 Salgados de Festa (Gatinho Salgadeiro)</option>
-        <option value="fitness">🥗 Comida Fitness / Marmita Fit (Gatinho Fit)</option>
-      </select>
-
-      <button onclick="salvarPerfil()">Salvar Perfil e Entrar</button>
-    </div>
-
-    <!-- Tela 2: Dashboard Principal -->
-    <div id="tela-dashboard" class="hidden">
-      <button class="btn-sair" onclick="fazerLogout()">Sair 🚪</button>
-      <h1 id="titulo-boas-vindas">Carregando...</h1>
-      <div class="mascote-box" id="avatar-dash">🐱</div>
-
-      <button class="btn-secundario" style="margin-top:0;" onclick="solicitarNotificacoes()">🔔 Ativar Notificações</button>
-
+    <!-- TELA 2: DASHBOARD FINANCEIRO -->
+    <div id="tela-dashboard" class="tela ativa">
+      <h2>Resumo Financeiro</h2>
       <div class="dashboard-financeiro">
         <div class="card-fin">
-          <h4>FATURAMENTO</h4>
+          <h4>FATURAMENTO TOTAL</h4>
           <p id="total-faturado">R$ 0.00</p>
         </div>
         <div class="card-fin">
-          <h4>PENDENTES</h4>
+          <h4>PEDIDOS PENDENTES</h4>
           <p id="qtd-pendentes">0</p>
         </div>
         <div class="card-fin">
-          <h4>ENTREGUES</h4>
+          <h4>PEDIDOS ENTREGUES</h4>
           <p id="qtd-entregues">0</p>
         </div>
       </div>
-
-      <div class="chat-container">
-        <h4 style="margin: 0 0 8px 0; color: #ff6b6b; text-align: center;">💬 Pergunte ao seu Gatinho</h4>
-        <div class="chat-log" id="chat-log">
-          <div class="chat-msg bot">Miau! Pergunte sobre seu faturamento, encomendas pendentes ou lista de compras!</div>
-        </div>
-        <div style="display: flex; gap: 5px;">
-          <input type="text" id="chat-input" placeholder="Ex: Quanto faturei? O que falta entregar?" style="margin: 0;" onkeydown="if(event.key==='Enter') perguntarGatinho()">
-          <button onclick="perguntarGatinho()" style="margin: 0; width: auto; padding: 0 15px;">Enviar</button>
-        </div>
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-      <h3>📅 Calendário de Entregas</h3>
-      <div class="calendario-grid">
-        <div class="cal-dia-head">Dom</div><div class="cal-dia-head">Seg</div><div class="cal-dia-head">Ter</div>
-        <div class="cal-dia-head">Qua</div><div class="cal-dia-head">Qui</div><div class="cal-dia-head">Sex</div><div class="cal-dia-head">Sáb</div>
-      </div>
-      <div class="calendario-grid" id="grid-dias-mes"></div>
-
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-      <h3>📖 Meu Cardápio Fixo</h3>
-      <div class="box-item">
-        <label for="item-cardapio-nome">Nome do Produto:</label>
-        <input type="text" id="item-cardapio-nome" placeholder="Ex: Brigadeiro Gourmet, Marmita Fit">
-
-        <label for="item-cardapio-preco">Preço Unitário (R$):</label>
-        <input type="number" id="item-cardapio-preco" step="0.01" placeholder="Ex: 2.50">
-
-        <button class="btn-secundario" onclick="salvarItemCardapio()">+ Adicionar ao Cardápio</button>
-      </div>
-
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-      <h3>📝 Nova Encomenda</h3>
-      <label for="cliente-nome">Nome do Cliente:</label>
-      <input type="text" id="cliente-nome" placeholder="Ex: Ana Silva">
-
-      <label for="cliente-telefone">Telefone / WhatsApp:</label>
-      <input type="text" id="cliente-telefone" placeholder="Ex: 21999999999">
-
-      <div class="box-item">
-        <label for="select-cardapio">Selecionar Item do Cardápio:</label>
-        <select id="select-cardapio" onchange="calcularValorAutomatico()">
-          <option value="">Carregando cardápio...</option>
-        </select>
-
-        <label for="item-qtd">Quantidade:</label>
-        <input type="number" id="item-qtd" value="1" min="1" onchange="calcularValorAutomatico()" oninput="calcularValorAutomatico()">
-      </div>
-
-      <label for="descricao">Resumo / Detalhes do Pedido:</label>
-      <textarea id="descricao" rows="2" placeholder="Ex: 50x Brigadeiro Gourmet"></textarea>
-
-      <label for="valor-total">Valor Total Calculado (R$):</label>
-      <input type="number" id="valor-total" step="0.01" placeholder="Ex: 125.00">
-
-      <label for="data-entrega">Data de Entrega:</label>
-      <input type="date" id="data-entrega">
-
-      <button onclick="salvarPedido()">Cadastrar Encomenda</button>
-
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-      <h3>🛒 Lista de Compras & Mercado</h3>
-      <div class="box-item">
-        <label for="insumo-nome">Item a Comprar:</label>
-        <input type="text" id="insumo-nome" placeholder="Ex: Leite Condensado">
-
-        <label for="insumo-qtd">Quantidade Necessária:</label>
-        <input type="text" id="insumo-qtd" placeholder="Ex: 10 caixas">
-
-        <button class="btn-secundario" onclick="salvarInsumo()">+ Adicionar à Lista</button>
-      </div>
-
-      <div id="lista-insumos" style="margin-top: 15px;">Carregando lista de compras...</div>
-
-      <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
-
-      <h3>📋 Suas Encomendas</h3>
-      <div class="filtros-pedidos">
-        <button class="btn-filtro ativo" id="filtro-todos" onclick="filtrarPedidos('todos')">Todos</button>
-        <button class="btn-filtro" id="filtro-pendentes" onclick="filtrarPedidos('pendentes')">Pendentes</button>
-        <button class="btn-filtro" id="filtro-entregues" onclick="filtrarPedidos('entregues')">Entregues</button>
-      </div>
-      <div id="lista-pedidos">Carregando encomendas...</div>
     </div>
+
+    <!-- TELA 3: CALENDÁRIO -->
+    <div id="tela-calendario" class="tela">
+      <h2>Agendamentos de Entregas</h2>
+      <div id="calendar-container">
+        <div id="calendar"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- WIDGET FLUTUANTE DO GATINHO IA -->
+  <div id="gatinho-widget">
+    <div id="gatinho-chat">
+      <div id="gatinho-header">🐱 Assistente Gatinho</div>
+      <div id="gatinho-mensagens">
+        <div><em>Miau! Sou seu assistente. Como posso ajudar com os seus dados hoje?</em></div>
+      </div>
+      <div id="gatinho-input-container">
+        <input type="text" id="gatinho-input" placeholder="Pergunte algo..." onkeypress="if(event.key==='Enter') enviarMensagemGatinho()">
+        <button id="gatinho-send" onclick="enviarMensagemGatinho()">>></button>
+      </div>
+    </div>
+    <button id="gatinho-btn" onclick="toggleGatinho()">🐱</button>
   </div>
 
   <script>
-    const SUPABASE_URL = 'https://emzfcvcncsyeaqejbpmw.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_TjhLD2ms8GQhkoOYvZWCWg_z0CyXjOI';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+    let calendarInstance = null;
     let usuarioAtual = null;
-    let listaCardapioLocal = [];
-    let todosPedidosLocal = [];
-    let todosInsumosLocal = [];
-    let filtroAtual = 'todos';
-    let nomeNegocioLocal = '';
 
-    const mascotes = {
-      confeitaria: { emoji: '🍰🐱🎂' }, marmitaria: { emoji: '🍱🐱🍳' },
-      padaria: { emoji: '🍞🐱🥐' }, pizzaria: { emoji: '🍕🐱🍕' },
-      lanchonete: { emoji: '🍔🐱🍟' }, sushi: { emoji: '🍣🐱🥢' },
-      acai: { emoji: '🍧🐱🫐' }, empadas: { emoji: '🥧🐱✨' },
-      salgados: { emoji: '🥟🐱🎉' }, fitness: { emoji: '🥗🐱💪' }
-    };
+    // Dados em memória de exemplo
+    let pedidos = [
+      { id: 1, cliente: 'João Silva', valor_total: 150.50, status: 'Entregue', data: '2026-08-28' },
+      { id: 2, cliente: 'Maria Souza', valor_total: 89.00, status: 'Pendente', data: '2026-08-30' }
+    ];
 
-    window.onload = async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        usuarioAtual = session.user;
-        verificarPerfilUsuario();
-      }
-    };
+    // Navegação entre abas
+    function navegarPara(idTela) {
+      document.querySelectorAll('#app-principal .tela').forEach(t => t.classList.remove('ativa'));
+      const telaAlvo = document.getElementById(idTela);
+      if (telaAlvo) telaAlvo.classList.add('ativa');
 
-    async function criarConta() {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-senha').value;
-      if (!email || !password) { alert('Digite e-mail e senha!'); return; }
-
-      const { data, error } = await supabaseClient.auth.signUp({ email, password });
-      if (error) alert('Erro ao cadastrar: ' + error.message);
-      else alert('Conta criada com sucesso! Faça login.');
-    }
-
-    async function fazerLogin() {
-      const email = document.getElementById('auth-email').value;
-      const password = document.getElementById('auth-senha').value;
-      if (!email || !password) { alert('Digite e-mail e senha!'); return; }
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-      if (error) alert('Erro ao entrar: ' + error.message);
-      else {
-        usuarioAtual = data.user;
-        verificarPerfilUsuario();
+      if (idTela === 'tela-calendario') {
+        setTimeout(inicializarCalendario, 100);
       }
     }
 
-    async function fazerLogout() {
-      await supabaseClient.auth.signOut();
-      window.location.reload();
-    }
+    // Autenticação básica no LocalStorage
+    function fazerLogin() {
+      const email = document.getElementById('login-email').value;
+      if (!email) return alert('Por favor, informe seu e-mail!');
 
-    async function verificarPerfilUsuario() {
-      document.getElementById('tela-auth').classList.add('hidden');
+      usuarioAtual = email;
+      localStorage.setItem('foodapp_user', email);
       
-      const { data } = await supabaseClient
-        .from('perfil')
-        .select('*')
-        .eq('user_id', usuarioAtual.id)
-        .maybeSingle();
-
-      if (data) carregarDashboard(data.nome_negocio, data.segmento);
-      else document.getElementById('tela-setup').classList.remove('hidden');
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('app-principal').style.display = 'block';
+      
+      atualizarResumoFinanceiro(pedidos);
+      navegarPara('tela-dashboard');
     }
 
-    function atualizarGatinho() {
-      const seg = document.getElementById('segmento').value;
-      document.getElementById('avatar-preview').innerText = mascotes[seg].emoji;
+    function fazerLogout() {
+      localStorage.removeItem('foodapp_user');
+      usuarioAtual = null;
+      document.getElementById('app-principal').style.display = 'none';
+      document.getElementById('tela-login').style.display = 'block';
     }
 
-    async function salvarPerfil() {
-      const nome = document.getElementById('nome-negocio').value;
-      const seg = document.getElementById('segmento').value;
-      if (!nome) return alert('Digite o nome do seu negócio!');
-
-      const { error } = await supabaseClient.from('perfil').insert([
-        { user_id: usuarioAtual.id, nome_negocio: nome, segmento: seg, gatinho_acessorio: mascotes[seg].emoji }
-      ]);
-
-      if (error) alert('Erro ao salvar perfil: ' + error.message);
-      else carregarDashboard(nome, seg);
-    }
-
-    function carregarDashboard(nome, seg) {
-      nomeNegocioLocal = nome;
-      document.getElementById('tela-setup').classList.add('hidden');
-      document.getElementById('tela-dashboard').classList.remove('hidden');
-      document.getElementById('titulo-boas-vindas').innerText = nome;
-      document.getElementById('avatar-dash').innerText = mascotes[seg]?.emoji || '🐱';
-      carregarCardapio();
-      carregarInsumos();
-      carregarPedidos();
-    }
-
-    function solicitarNotificacoes() {
-      if ('Notification' in window) {
-        Notification.requestPermission().then(p => {
-          if (p === 'granted') alert('Notificações ativadas! 🎉');
-        });
-      }
-    }
-
-    function perguntarGatinho() {
-      const input = document.getElementById('chat-input');
-      const pergunta = input.value.trim().toLowerCase();
-      if (!pergunta) return;
-
-      const chatLog = document.getElementById('chat-log');
-      chatLog.innerHTML += `<div class="chat-msg user">${input.value}</div>`;
-      input.value = '';
-
-      let resposta = "Miau! Pergunte sobre faturamento, entregas ou lista de compras!";
-
-      if (pergunta.includes('faturei') || pergunta.includes('faturamento') || pergunta.includes('ganhei')) {
-        const total = todosPedidosLocal.reduce((acc, p) => acc + parseFloat(p.valor_total || 0), 0);
-        resposta = `🐾 Seu faturamento total é de **R$ ${total.toFixed(2)}**!`;
-      } else if (pergunta.includes('pendente') || pergunta.includes('falta')) {
-        const pendentes = todosPedidosLocal.filter(p => p.status !== 'Entregue');
-        resposta = `🐾 Você tem **${pendentes.length} encomenda(s) pendente(s)**.`;
-      } else if (pergunta.includes('comprar') || pergunta.includes('mercado')) {
-        const aComprar = todosInsumosLocal.filter(i => !i.comprado);
-        resposta = aComprar.length ? `🐾 Itens a comprar: ${aComprar.map(i => i.nome).join(', ')}.` : `🐾 Sua lista de mercado está vazia!`;
-      }
-
-      chatLog.innerHTML += `<div class="chat-msg bot">${resposta}</div>`;
-      chatLog.scrollTop = chatLog.scrollHeight;
-    }
-
-    function renderizarCalendario() {
-      const grid = document.getElementById('grid-dias-mes');
-      grid.innerHTML = '';
-      const hoje = new Date(), ano = hoje.getFullYear(), mes = hoje.getMonth();
-      const primeiroDia = new Date(ano, mes, 1).getDay();
-      const totalDias = new Date(ano, mes + 1, 0).getDate();
-
-      for (let i = 0; i < primeiroDia; i++) grid.innerHTML += `<div class="cal-dia" style="background:transparent; border:none;"></div>`;
-
-      for (let dia = 1; dia <= totalDias; dia++) {
-        const dataStr = `${ano}-${String(mes + 1).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-        const temPedido = todosPedidosLocal.some(p => p.data_entrega && p.data_entrega.startsWith(dataStr));
-        grid.innerHTML += `<div class="cal-dia ${temPedido ? 'com-pedido' : ''}">${dia}${temPedido ? '<br>📦' : ''}</div>`;
-      }
-    }
-
-    async function salvarItemCardapio() {
-      const nome = document.getElementById('item-cardapio-nome').value;
-      const preco = document.getElementById('item-cardapio-preco').value;
-      if (!nome || !preco) return alert('Preencha nome e preço!');
-
-      const { error } = await supabaseClient.from('produtos_cardapio').insert([{ user_id: usuarioAtual.id, nome, preco_unitario: parseFloat(preco) }]);
-      if (error) alert('Erro: ' + error.message);
-      else {
-        document.getElementById('item-cardapio-nome').value = '';
-        document.getElementById('item-cardapio-preco').value = '';
-        carregarCardapio();
-      }
-    }
-
-    async function carregarCardapio() {
-      const { data } = await supabaseClient.from('produtos_cardapio').select('*').eq('user_id', usuarioAtual.id).order('nome', { ascending: true });
-      listaCardapioLocal = data || [];
-      const select = document.getElementById('select-cardapio');
-      select.innerHTML = listaCardapioLocal.length ? '<option value="">-- Escolha um item --</option>' + listaCardapioLocal.map(i => `<option value="${i.id}">${i.nome} (R$ ${parseFloat(i.preco_unitario).toFixed(2)})</option>`).join('') : '<option value="">Nenhum produto cadastrado</option>';
-    }
-
-    function calcularValorAutomatico() {
-      const selectId = document.getElementById('select-cardapio').value;
-      const qtd = parseInt(document.getElementById('item-qtd').value) || 1;
-      const item = listaCardapioLocal.find(i => i.id == selectId);
-      if (item) {
-        document.getElementById('valor-total').value = (item.preco_unitario * qtd).toFixed(2);
-        document.getElementById('descricao').value = `${qtd}x ${item.nome}`;
-      }
-    }
-
-    async function salvarInsumo() {
-      const nome = document.getElementById('insumo-nome').value;
-      const qtd = document.getElementById('insumo-qtd').value;
-      if (!nome) return alert('Digite o item!');
-
-      const { error } = await supabaseClient.from('insumos').insert([{ user_id: usuarioAtual.id, nome, quantidade: qtd, comprado: false }]);
-      if (error) alert('Erro: ' + error.message);
-      else {
-        document.getElementById('insumo-nome').value = '';
-        document.getElementById('insumo-qtd').value = '';
-        carregarInsumos();
-      }
-    }
-
-    async function carregarInsumos() {
-      const { data } = await supabaseClient.from('insumos').select('*').eq('user_id', usuarioAtual.id).order('created_at', { ascending: false });
-      todosInsumosLocal = data || [];
-      const listaDiv = document.getElementById('lista-insumos');
-      listaDiv.innerHTML = todosInsumosLocal.length ? todosInsumosLocal.map(item => `
-        <div class="item-mercado ${item.comprado ? 'comprado' : ''}">
-          <div>
-            <input type="checkbox" ${item.comprado ? 'checked' : ''} onchange="alternarInsumo(${item.id}, ${!item.comprado})">
-            <strong>${item.nome}</strong> ${item.quantidade ? `(${item.quantidade})` : ''}
-          </div>
-        </div>
-      `).join('') : '<p style="text-align:center; color:#999;">Lista vazia.</p>';
-    }
-
-    async function alternarInsumo(id, novoStatus) {
-      await supabaseClient.from('insumos').update({ comprado: novoStatus }).eq('id', id);
-      carregarInsumos();
-    }
-
-    async function salvarPedido() {
-      const cliente = document.getElementById('cliente-nome').value;
-      const telefone = document.getElementById('cliente-telefone').value;
-      const desc = document.getElementById('descricao').value;
-      const valor = document.getElementById('valor-total').value;
-      const dataEntrega = document.getElementById('data-entrega').value;
-
-      if (!cliente || !desc || !valor) return alert('Preencha os campos!');
-
-      const { error } = await supabaseClient.from('pedidos').insert([
-        { user_id: usuarioAtual.id, cliente_nome: cliente, telefone: telefone || '', descricao: desc, valor_total: parseFloat(valor), data_entrega: dataEntrega || null, status: 'Pendente' }
-      ]);
-
-      if (error) alert('Erro: ' + error.message);
-      else {
-        alert('Pedido cadastrado!');
-        document.getElementById('cliente-nome').value = '';
-        document.getElementById('cliente-telefone').value = '';
-        document.getElementById('descricao').value = '';
-        document.getElementById('valor-total').value = '';
-        document.getElementById('data-entrega').value = '';
-        carregarPedidos();
-      }
-    }
-
-    async function carregarPedidos() {
-      const { data } = await supabaseClient.from('pedidos').select('*').eq('user_id', usuarioAtual.id).order('created_at', { ascending: false });
-      todosPedidosLocal = data || [];
-      atualizarResumoFinanceiro(todosPedidosLocal);
-      renderizarCalendario();
-      renderizarPedidos();
-    }
-
-    function filtrarPedidos(tipo) {
-      filtroAtual = tipo;
-      document.querySelectorAll('.btn-filtro').forEach(btn => btn.classList.remove('ativo'));
-      document.getElementById(`filtro-${tipo}`).classList.add('ativo');
-      renderizarPedidos();
-    }
-
-    function renderizarPedidos() {
-      const listaDiv = document.getElementById('lista-pedidos');
-      let pedidosFiltrados = todosPedidosLocal.filter(p => {
-        if (filtroAtual === 'pendentes') return p.status !== 'Entregue';
-        if (filtroAtual === 'entregues') return p.status === 'Entregue';
-        return true;
-      });
-
-      if (!pedidosFiltrados.length) { listaDiv.innerHTML = '<p style="text-align:center; color:#999;">Sem encomendas.</p>'; return; }
-
-      listaDiv.innerHTML = pedidosFiltrados.map(p => {
-        const statusAtual = p.status || 'Pendente';
-        const badgeClass = statusAtual === 'Entregue' ? 'entregue' : (statusAtual === 'Em Preparo' ? 'preparo' : '');
-        let numLimpo = (p.telefone || '').replace(/\D/g, '');
-        if (numLimpo.length >= 10 && !numLimpo.startsWith('55')) numLimpo = '55' + numLimpo;
-        
-        const msgWhats = encodeURIComponent(
-          `Olá ${p.cliente_nome}! 👋\n` +
-          `Aqui é do *${nomeNegocioLocal || 'nosso estabelecimento'}*.\n\n` +
-          `📝 *Resumo do seu Pedido:*\n${p.descricao}\n\n` +
-          `💰 *Total:* R$ ${parseFloat(p.valor_total).toFixed(2)}\n` +
-          `📅 *Data de Entrega:* ${p.data_entrega ? new Date(p.data_entrega).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'A combinar'}\n\n` +
-          `Obrigado pela preferência! 😊`
-        );
-
-        return `
-          <div class="card-pedido ${statusAtual === 'Entregue' ? 'entregue' : ''}">
-            <h4>${p.cliente_nome} <span class="badge ${badgeClass}">${statusAtual}</span></h4>
-            <p><strong>Pedido:</strong> ${p.descricao}</p>
-            <p><strong>Valor:</strong> R$ ${parseFloat(p.valor_total).toFixed(2)}</p>
-            <p><strong>Entrega:</strong> ${p.data_entrega ? new Date(p.data_entrega).toLocaleDateString('pt-BR', {timeZone: 'UTC'}) : 'Sem data definida'}</p>
-            <div style="margin-top: 8px;">
-              ${statusAtual !== 'Em Preparo' && statusAtual !== 'Entregue' ? `<button class="btn-status" onclick="alterarStatusPedido(${p.id}, 'Em Preparo')">🧑‍🍳 Preparar</button>` : ''}
-              ${statusAtual !== 'Entregue' ? `<button class="btn-status" style="background:#2ecc71;" onclick="alterarStatusPedido(${p.id}, 'Entregue')">✅ Concluir</button>` : ''}
-              ${numLimpo ? `<a href="https://wa.me/${numLimpo}?text=${msgWhats}" target="_blank" class="btn-whatsapp">📲 WhatsApp</a>` : ''}
-              <button class="btn-deletar" onclick="deletarPedido(${p.id})">🗑️ Excluir</button>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    async function alterarStatusPedido(id, novoStatus) {
-      await supabaseClient.from('pedidos').update({ status: novoStatus }).eq('id', id);
-      carregarPedidos();
-    }
-
-    async function deletarPedido(id) {
-      if (!confirm('Deseja excluir esta encomenda?')) return;
-      await supabaseClient.from('pedidos').delete().eq('id', id);
-      carregarPedidos();
-    }
-
-    function atualizarResumoFinanceiro(pedidos) {
+    // Cálculo Financeiro
+    function atualizarResumoFinanceiro(listaPedidos) {
       let faturamento = 0, pendentes = 0, entregues = 0;
-      pedidos.forEach(p => {
+
+      listaPedidos.forEach(p => {
         faturamento += parseFloat(p.valor_total || 0);
         if (p.status === 'Entregue') entregues++; else pendentes++;
       });
@@ -527,6 +180,49 @@
       document.getElementById('total-faturado').innerText = `R$ ${faturamento.toFixed(2)}`;
       document.getElementById('qtd-pendentes').innerText = pendentes;
       document.getElementById('qtd-entregues').innerText = entregues;
+    }
+
+    // Renderização do Calendário FullCalendar
+    function inicializarCalendario() {
+      const calendarEl = document.getElementById('calendar');
+      if (!calendarEl) return;
+      
+      if (calendarInstance) calendarInstance.destroy();
+
+      const eventos = pedidos.map(p => ({
+        title: `${p.cliente} (R$ ${p.valor_total})`,
+        start: p.data,
+        color: p.status === 'Entregue' ? '#2ecc71' : '#e67e22'
+      }));
+
+      calendarInstance = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'pt-br',
+        events: eventos
+      });
+      calendarInstance.render();
+    }
+
+    // Chat do Gatinho IA
+    function toggleGatinho() {
+      const chat = document.getElementById('gatinho-chat');
+      chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function enviarMensagemGatinho() {
+      const input = document.getElementById('gatinho-input');
+      const msg = input.value.trim();
+      if (!msg) return;
+
+      const areaMsgs = document.getElementById('gatinho-mensagens');
+      areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: right;"><b>Você:</b> ${msg}</div>`;
+      
+      setTimeout(() => {
+        areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: #ff6b6b;"><b>🐱 Gatinho:</b> Miau! Você possui ${pedidos.length} pedidos registrados até o momento!</div>`;
+        areaMsgs.scrollTop = areaMsgs.scrollHeight;
+      }, 500);
+
+      input.value = '';
     }
   </script>
 </body>
