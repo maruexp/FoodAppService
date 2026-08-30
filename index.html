@@ -94,7 +94,7 @@
       <input type="text" id="cad-nome" placeholder="Seu Nome / Nome do Negócio">
       <input type="email" id="cad-email" placeholder="Seu e-mail">
       <input type="password" id="cad-senha" placeholder="Crie uma senha (mín. 6 caracteres)">
-      <button class="btn-main" onclick="cadastrarUsuarioSupabase()">Enviar Código por E-mail</button>
+      <button class="btn-main" onclick="cadastrarUsuarioSupabase()">Criar Conta</button>
     </div>
 
     <!-- Form de Cadastro Passo 2 (Validação OTP) -->
@@ -264,10 +264,10 @@
   </div>
 
   <script>
-    // Configuração do Supabase (Substitua pelas suas credenciais reais do projeto)
-    const SUPABASE_URL = 'https://emzfcvcncsyeaqejbpmw.supabase.co';
-    const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY';
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Configuração e Inicialização do Supabase
+    const SUPABASE_URL = "https://emzfcvcncsyeaqejbpmw.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_TjhLD2ms8GQhkoOYvZWCWg_z0CyXjOI";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let calendarInstance = null;
     let insumos = [];
@@ -295,13 +295,15 @@
 
       if (!email || !password) return alert('Informe e-mail e senha!');
 
+      // Validação Real do Supabase Auth
       const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
       if (error) {
-        alert('Erro no login: ' + error.message);
-      } else {
-        exibirApp();
+        alert('Falha na autenticação: ' + error.message);
+        return; // Bloqueia o acesso se der erro
       }
+
+      exibirApp();
     }
 
     async function cadastrarUsuarioSupabase() {
@@ -320,9 +322,9 @@
       });
 
       if (error) {
-        alert('Erro no cadastro: ' + error.message);
+        alert('Erro ao criar conta: ' + error.message);
       } else {
-        alert('Código de verificação enviado para o seu e-mail!');
+        alert('Conta registrada! Se a confirmação por código estiver ativada no seu projeto, insira o código a seguir.');
         document.getElementById('form-cad-1').classList.remove('ativo');
         document.getElementById('form-cad-2').classList.add('ativo');
       }
