@@ -7,6 +7,8 @@
 
   <!-- FullCalendar CDN -->
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     :root {
@@ -71,7 +73,7 @@
 </head>
 <body>
 
-  <!-- 1. TELA DE AUTENTICAÇÃO / CADASTRO COM CÓDIGO -->
+  <!-- 1. TELA DE AUTENTICAÇÃO COM SUPABASE -->
   <div id="tela-auth" class="tela ativa">
     <h2>🐱 FoodApp</h2>
     
@@ -91,15 +93,15 @@
     <div id="form-cad-1" class="auth-form">
       <input type="text" id="cad-nome" placeholder="Seu Nome / Nome do Negócio">
       <input type="email" id="cad-email" placeholder="Seu e-mail">
-      <input type="password" id="cad-senha" placeholder="Crie uma senha">
-      <button class="btn-main" onclick="enviarCodigoVerificacao()">Enviar Código por E-mail</button>
+      <input type="password" id="cad-senha" placeholder="Crie uma senha (mín. 6 caracteres)">
+      <button class="btn-main" onclick="cadastrarUsuarioSupabase()">Enviar Código por E-mail</button>
     </div>
 
-    <!-- Form de Cadastro Passo 2 (Validação do Código) -->
+    <!-- Form de Cadastro Passo 2 (Validação OTP) -->
     <div id="form-cad-2" class="auth-form">
-      <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Enviamos um código de 6 dígitos para o seu e-mail!</p>
-      <input type="text" id="cad-codigo" placeholder="Código de 6 dígitos (ex: 123456)" maxlength="6" style="text-align: center; font-size: 18px; letter-spacing: 4px;">
-      <button class="btn-main" onclick="validarCodigoEFinalizar()">Confirmar e Acessar</button>
+      <p style="font-size: 13px; color: #666; margin-bottom: 10px;">Enviamos um código de verificação para o seu e-mail!</p>
+      <input type="text" id="cad-codigo" placeholder="Código de 6 dígitos" maxlength="6" style="text-align: center; font-size: 18px; letter-spacing: 4px;">
+      <button class="btn-main" onclick="validarCodigoSupabase()">Confirmar e Acessar</button>
     </div>
   </div>
 
@@ -262,13 +264,18 @@
   </div>
 
   <script>
+    // Configuração do Supabase (Substitua pelas suas credenciais reais do projeto)
+    const SUPABASE_URL = 'https://emzfcvcncsyeaqejbpmw.supabase.co';
+    const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     let calendarInstance = null;
     let insumos = [];
     let receitas = [];
     let encomendas = [];
-    let codigoGeradoTemp = null;
+    let emailCadastroTemp = '';
 
-    // Autenticação & Cadastro
+    // Autenticação & Cadastro Supabase
     function mudarAbaAuth(aba) {
       document.querySelectorAll('.auth-tabs button').forEach(b => b.classList.remove('ativo'));
       document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('ativo'));
@@ -282,39 +289,72 @@
       }
     }
 
-    function fazerLogin() {
-      const email = document.getElementById('login-email').value;
-      if (!email) return alert('Informe seu e-mail!');
+    async function fazerLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-senha').value.trim();
+
+      if (!email || !password) return alert('Informe e-mail e senha!');
+
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      if (error) {
+        alert('Erro no login: ' + error.message);
+      } else {
+        exibirApp();
+      }
+    }
+
+    async function cadastrarUsuarioSupabase() {
+      const nome = document.getElementById('cad-nome').value.trim();
+      const email = document.getElementById('cad-email').value.trim();
+      const password = document.getElementById('cad-senha').value.trim();
+
+      if (!nome || !email || !password) return alert('Preencha todos os campos!');
+
+      emailCadastroTemp = email;
+
+      const { data, error } = await supabaseClient.auth.signUp({
+        email,
+        password,
+        options: { data: { display_name: nome } }
+      });
+
+      if (error) {
+        alert('Erro no cadastro: ' + error.message);
+      } else {
+        alert('Código de verificação enviado para o seu e-mail!');
+        document.getElementById('form-cad-1').classList.remove('ativo');
+        document.getElementById('form-cad-2').classList.add('ativo');
+      }
+    }
+
+    async function validarCodigoSupabase() {
+      const token = document.getElementById('cad-codigo').value.trim();
       
+      if (!token || !emailCadastroTemp) return alert('Informe o código enviado ao e-mail!');
+
+      const { data, error } = await supabaseClient.auth.verifyOtp({
+        email: emailCadastroTemp,
+        token,
+        type: 'signup'
+      });
+
+      if (error) {
+        alert('Código inválido ou expirado: ' + error.message);
+      } else {
+        alert('E-mail verificado com sucesso!');
+        exibirApp();
+      }
+    }
+
+    function exibirApp() {
       document.getElementById('tela-auth').style.display = 'none';
       document.getElementById('app-principal').style.display = 'block';
       navegarPara('tela-dashboard');
     }
 
-    function enviarCodigoVerificacao() {
-      const email = document.getElementById('cad-email').value;
-      if (!email) return alert('Informe seu e-mail para receber o código!');
-
-      codigoGeradoTemp = Math.floor(100000 + Math.random() * 900000).toString();
-      alert(`[SIMULAÇÃO E-MAIL]\nSeu código de verificação é: ${codigoGeradoTemp}`);
-
-      document.getElementById('form-cad-1').classList.remove('ativo');
-      document.getElementById('form-cad-2').classList.add('ativo');
-    }
-
-    function validarCodigoEFinalizar() {
-      const codigoDigitado = document.getElementById('cad-codigo').value.trim();
-      if (codigoDigitado === codigoGeradoTemp) {
-        alert('E-mail verificado com sucesso!');
-        document.getElementById('tela-auth').style.display = 'none';
-        document.getElementById('app-principal').style.display = 'block';
-        navegarPara('tela-dashboard');
-      } else {
-        alert('Código incorreto. Tente novamente!');
-      }
-    }
-
-    function fazerLogout() {
+    async function fazerLogout() {
+      await supabaseClient.auth.signOut();
       document.getElementById('app-principal').style.display = 'none';
       document.getElementById('tela-auth').style.display = 'block';
       mudarAbaAuth('login');
@@ -469,7 +509,6 @@
 
       const msgLower = msg.toLowerCase();
       
-      // Checa se o usuário pediu para criar/gerar um meme/imagem
       if (msgLower.includes('meme') || msgLower.includes('imagem') || msgLower.includes('desenhe') || msgLower.includes('crie')) {
         areaMsgs.innerHTML += `<div style="margin-bottom: 8px; text-align: left; color: var(--primary-color);"><b>🐱 Gatinho:</b> Miau! Desenhando seu meme com IA, aguarde um segundo...</div>`;
         areaMsgs.scrollTop = areaMsgs.scrollHeight;
